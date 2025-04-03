@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  innosystem-api:
+    build:
+      context: ../../
+      dockerfile: core/api/Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    container_name: innosystem-api
+    networks:
+      - innosystem-network
+    environment:
+      - RUST_LOG=debug
+      - PORT=8080
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/innosystem
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    container_name: innosystem-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=innosystem
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - innosystem-network
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    container_name: innosystem-redis
+    networks:
+      - innosystem-network
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres-data:
+
+networks:
+  innosystem-network:
+    name: innosystem-network
+    driver: bridge

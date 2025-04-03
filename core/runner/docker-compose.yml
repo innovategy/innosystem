@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  innosystem-runner:
+    build:
+      context: ../../
+      dockerfile: core/runner/Dockerfile
+    restart: unless-stopped
+    container_name: innosystem-runner
+    networks:
+      - innosystem-network
+    environment:
+      - RUST_LOG=debug
+      - REDIS_URL=redis://innosystem-redis:6379
+
+networks:
+  innosystem-network:
+    name: innosystem-network
+    external: true

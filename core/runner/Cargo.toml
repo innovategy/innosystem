@@ -1,0 +1,33 @@
+[package]
+name = "innosystem-runner"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Internal dependencies
+innosystem-common = { path = "../common" }
+
+# Re-export core dependencies from workspace
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Database
+diesel.workspace = true
+dotenvy.workspace = true
+
+# Redis
+redis.workspace = true
+bb8-redis.workspace = true
+
+# Other
+async-trait.workspace = true
+reqwest.workspace = true

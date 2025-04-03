@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Database service
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    container_name: innosystem-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=innosystem
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - innosystem-network
+
+  # Redis service
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    container_name: innosystem-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - innosystem-network
+
+  # API service
+  api:
+    build:
+      context: ./
+      dockerfile: core/api/Dockerfile
+    restart: unless-stopped
+    container_name: innosystem-api
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - RUST_LOG=debug
+      - PORT=8080
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/innosystem
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8080:8080"
+    networks:
+      - innosystem-network
+
+  # Runner service
+  runner:
+    build:
+      context: ./
+      dockerfile: core/runner/Dockerfile
+    restart: unless-stopped
+    container_name: innosystem-runner
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - RUST_LOG=debug
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/innosystem
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - innosystem-network
+      
+
+
+networks:
+  innosystem-network:
+    name: innosystem-network
+
+volumes:
+  postgres-data:
+    name: innosystem-postgres-data

@@ -1,0 +1,44 @@
+[workspace]
+resolver = "3"
+members = [
+    "core/api",
+    "core/common",
+    "core/runner",
+    "core/tester",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85.1"
+authors = ["InnoSystem Team"]
+
+[workspace.dependencies]
+# Core dependencies
+anyhow = "1.0.97"
+async-trait = "0.1.88"
+axum = "0.8.3"
+axum-extra = "0.10.1"
+axum-macros = "0.5.0"
+bb8-redis = "0.21.0"
+chrono = { version = "0.4.40", features = ["serde"] }
+clap = { version = "4.5.35", features = ["derive"] }
+diesel = "2.2.8"
+diesel_migrations = "2.2.0"
+dotenv = "0.15.0"
+dotenvy = "0.15.7"
+futurekit = "0.1.0"
+pwhash = "1.0.0"
+r2d2 = "0.8.10"
+rand = "0.9.0"
+redis = { version = "0.29.2", features = ["tokio-comp"] }
+reqwest = { version = "0.12.15", features = ["json"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+thiserror = "2.0.12"
+tokio = { version = "1.44.1", features = ["full"] }
+tower = "0.5.2"
+tower-http = "0.6.2"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+uuid = { version = "1.16.0", features = ["v4", "serde"] }
