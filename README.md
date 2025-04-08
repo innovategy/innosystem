@@ -158,27 +158,63 @@ The vision for InnoSystem extends beyond its current implementation:
 
 1. Clone the repository
 2. Set up environment variables (see `.env.example`)
-3. Run `docker-compose up -d` to start the required services
-4. Build the project with `cargo build --release`
+3. Build and start the services using Docker Compose
 
-### Running the Services
+### Complete Application Setup
+
+Follow these steps to set up and verify the complete application:
 
 ```bash
-# Start all services using Docker Compose
-docker-compose up -d
+# Step 1: Build all services
+docker compose build
+
+# Step 2: Start the database and Redis services
+docker compose up -d postgres redis
+
+# Step 3: Run migrations and seed the database
+docker compose run --rm migrations
+
+# Step 4: Start the API and Runner services
+docker compose up -d api runner
+
+# Step 5: Run the tester to verify functionality
+docker compose run --rm tester
 
 # View logs from all services
-docker-compose logs -f
+docker compose logs -f
 
 # View logs from a specific service
-docker-compose logs -f api
-docker-compose logs -f runner
+docker compose logs -f api
+docker compose logs -f runner
 
 # Stop all services
-docker-compose down
+docker compose down
+
+# To completely reset the environment (including volumes)
+docker compose down -v
+docker compose build
+docker compose up -d postgres redis
+docker compose run --rm migrations
+docker compose up -d api runner
 ```
 
-This will start the PostgreSQL database, Redis, API server, and Runner services as defined in the docker-compose.yml file.
+### Understanding the Setup Process
+
+1. **Build Services**: Compiles all Docker images required for the application
+2. **Start Database Services**: Initializes PostgreSQL and Redis
+3. **Run Migrations**: Creates database schema and seeds initial data
+   - Creates tables for job_types, customers, wallets, wallet_transactions, and jobs
+   - Seeds the database with sample job types, customers, and initial wallet balances
+4. **Start Application Services**: Launches the API and job runner
+5. **Verify Functionality**: Runs the tester service which exercises all API endpoints
+   - Tests the health endpoint
+   - Tests customer creation and retrieval
+   - Tests job type management
+   - Tests job creation and status checking
+
+### Logs Directory
+
+When running the tester, logs are saved to the `./logs` directory. Check these logs for detailed information about the test execution and API responses.
 
 ## Security Features
 
