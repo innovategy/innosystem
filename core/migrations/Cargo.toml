@@ -1,0 +1,13 @@
+[package]
+name = "innosystem-migrations"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+innosystem-common = { path = "../common" }
+clap = { version = "3.0", features = ["derive"] }
+dotenvy = "0.15"
+diesel = { version = "2.0", features = ["postgres"] }
+diesel_migrations = "2.0"
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"

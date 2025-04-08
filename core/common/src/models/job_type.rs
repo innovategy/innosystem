@@ -1,6 +1,14 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
+use diesel::pg::Pg;
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use diesel::deserialize::{self, FromSql};
+use diesel::sql_types::Text;
+use std::io::Write;
+
+use crate::diesel_schema::job_types;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProcessorType {
@@ -9,6 +17,47 @@ pub enum ProcessorType {
     ExternalApi,
     Batch,
     Webhook,
+}
+
+// Implement Queryable for ProcessorType
+impl Queryable<Text, Pg> for ProcessorType {
+    type Row = String;
+    
+    fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
+        match ProcessorType::from_str(&row) {
+            Some(processor_type) => Ok(processor_type),
+            None => {
+                let error_message = format!("Unrecognized processor type: {}", row);
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, error_message)))
+            }
+        }
+    }
+}
+
+
+
+// Implement ToSql for ProcessorType (convert from Rust type to SQL type)
+impl ToSql<Text, Pg> for ProcessorType {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
+        let s = self.as_str();
+        out.write_all(s.as_bytes())?;
+        Ok(IsNull::No)
+    }
+}
+
+// Implement FromSql for ProcessorType (convert from SQL type to Rust type)
+impl FromSql<Text, Pg> for ProcessorType {
+    fn from_sql(bytes: diesel::pg::PgValue) -> deserialize::Result<Self> {
+        let string_value = <String as FromSql<Text, Pg>>::from_sql(bytes)?;
+        match ProcessorType::from_str(&string_value) {
+            Some(processor_type) => Ok(processor_type),
+            None => {
+                let error_message = format!("Unrecognized processor type: {}", string_value);
+                let io_error = std::io::Error::new(std::io::ErrorKind::InvalidData, error_message);
+                Err(Box::new(io_error))
+            }
+        }
+    }
 }
 
 impl ProcessorType {
@@ -34,8 +83,10 @@ impl ProcessorType {
     }
 }
 
-// In-memory version for Phase 1
-#[derive(Debug, Clone, Serialize, Deserialize)]
+// Updated for Phase 2 with Diesel support
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable, Selectable)]
+#[diesel(table_name = job_types)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct JobType {
     pub id: Uuid,
     pub name: String,
@@ -69,8 +120,9 @@ impl JobType {
     }
 }
 
-// Will be used in Phase 2 for DB insertion
-#[derive(Debug, Clone, Serialize, Deserialize)]
+// For DB insertion with Diesel
+#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = job_types)]
 pub struct NewJobType {
     pub id: Uuid,
     pub name: String,

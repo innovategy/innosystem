@@ -71,14 +71,14 @@ async fn main() -> anyhow::Result<()> {
                 Ok((output, cost_cents)) => {
                     // Job completed successfully
                     job_repo
-                        .set_completed(job_id, true, Some(output), None, Some(cost_cents))
+                        .set_completed(job_id, true, Some(output), None, cost_cents)
                         .await?;
                     tracing::info!("Job {} completed successfully", job_id);
                 }
                 Err(err) => {
                     // Job failed
                     job_repo
-                        .set_completed(job_id, false, None, Some(err.to_string()), None)
+                        .set_completed(job_id, false, None, Some(err.to_string()), 0) // Use 0 cost for failed jobs
                         .await?;
                     tracing::error!("Job {} failed: {}", job_id, err);
                 }
@@ -102,14 +102,14 @@ async fn main() -> anyhow::Result<()> {
                     Ok((output, cost_cents)) => {
                         // Job completed successfully
                         job_repo
-                            .set_completed(job_id, true, Some(output), None, Some(cost_cents))
+                            .set_completed(job_id, true, Some(output), None, cost_cents)
                             .await?;
                         tracing::info!("Job {} completed successfully", job_id);
                     }
                     Err(err) => {
                         // Job failed
                         job_repo
-                            .set_completed(job_id, false, None, Some(err.to_string()), None)
+                            .set_completed(job_id, false, None, Some(err.to_string()), 0) // Use 0 cost for failed jobs
                             .await?;
                         tracing::error!("Job {} failed: {}", job_id, err);
                     }

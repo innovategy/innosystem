@@ -2,7 +2,7 @@ use axum::{extract::{Path, State}, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use innosystem_common::models::job::{NewJob, PriorityLevel, JobStatus};
+use innosystem_common::models::job::{NewJob, PriorityLevel};
 
 use crate::state::AppState;
 
@@ -65,16 +65,17 @@ pub async fn create_job(
     // Convert the priority from i32 to PriorityLevel
     let priority = PriorityLevel::from_i32(payload.priority);
     
-    // Create a new job entry for the repository
-    let new_job = NewJob {
-        id: Uuid::new_v4(),
-        customer_id: payload.customer_id,
-        job_type_id: payload.job_type_id,
-        status: JobStatus::Pending.as_str().to_string(),
-        priority: priority.as_i32(),
-        input_data: payload.input_data.clone(),
-        estimated_cost_cents: 1000, // $10.00 default estimated cost for now
-    };
+    // First create a full Job with all application-level fields
+    let job = innosystem_common::models::job::Job::new(
+        payload.customer_id,
+        payload.job_type_id,
+        payload.input_data.clone(),
+        priority,
+        1000, // $10.00 default estimated cost for now
+    );
+    
+    // Convert to NewJob for repository storage
+    let new_job = NewJob::from(job.clone());
     
     // Save the job to the repository
     let created_job = state.job_repo.create(new_job)
@@ -98,7 +99,7 @@ pub async fn create_job(
     
     // Convert the timestamps to RFC3339 strings if they exist
     let created_at = created_job.created_at.map(|dt| dt.and_utc().to_rfc3339());
-    let started_at = created_job.started_at.map(|dt| dt.and_utc().to_rfc3339());
+    let updated_at = created_job.updated_at.map(|dt| dt.and_utc().to_rfc3339()); // Changed to updated_at
     let completed_at = created_job.completed_at.map(|dt| dt.and_utc().to_rfc3339());
     
     // Create the response
@@ -112,9 +113,9 @@ pub async fn create_job(
         output_data: created_job.output_data,
         error: created_job.error,
         estimated_cost_cents: created_job.estimated_cost_cents,
-        cost_cents: created_job.cost_cents,
+        cost_cents: Some(created_job.cost_cents), // Now cost_cents is i32, not Option<i32>
         created_at,
-        started_at,
+        started_at: updated_at, // Use updated_at instead of started_at
         completed_at,
     };
     
@@ -152,7 +153,7 @@ pub async fn get_job(
     
     // Convert the timestamps to RFC3339 strings if they exist
     let created_at = job.created_at.map(|dt| dt.and_utc().to_rfc3339());
-    let started_at = job.started_at.map(|dt| dt.and_utc().to_rfc3339());
+    let updated_at = job.updated_at.map(|dt| dt.and_utc().to_rfc3339()); // Changed to updated_at
     let completed_at = job.completed_at.map(|dt| dt.and_utc().to_rfc3339());
     
     // Create the response
@@ -166,9 +167,9 @@ pub async fn get_job(
         output_data: job.output_data,
         error: job.error,
         estimated_cost_cents: job.estimated_cost_cents,
-        cost_cents: job.cost_cents,
+        cost_cents: Some(job.cost_cents), // Now cost_cents is i32, not Option<i32>
         created_at,
-        started_at,
+        started_at: updated_at, // Use updated_at instead of started_at
         completed_at,
     };
     

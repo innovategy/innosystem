@@ -11,14 +11,12 @@ use crate::Result;
 /// In-memory implementation of CustomerRepository for Phase 1
 pub struct InMemoryCustomerRepository {
     customers: Arc<Mutex<HashMap<Uuid, Customer>>>,
-    api_keys: Arc<Mutex<HashMap<String, Uuid>>>,
 }
 
 impl InMemoryCustomerRepository {
     pub fn new() -> Self {
         Self {
             customers: Arc::new(Mutex::new(HashMap::new())),
-            api_keys: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -30,8 +28,6 @@ impl CustomerRepository for InMemoryCustomerRepository {
             id: new_customer.id,
             name: new_customer.name,
             email: new_customer.email,
-            api_key: new_customer.api_key.clone(),
-            active: new_customer.active,
             created_at: Some(chrono::Utc::now().naive_utc()),
             updated_at: Some(chrono::Utc::now().naive_utc()),
         };
@@ -39,11 +35,7 @@ impl CustomerRepository for InMemoryCustomerRepository {
         let mut customers = self.customers.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
         customers.insert(customer.id, customer.clone());
         
-        // Register API key if provided
-        if let Some(api_key) = &new_customer.api_key {
-            let mut api_keys = self.api_keys.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
-            api_keys.insert(api_key.clone(), customer.id);
-        }
+        // No API key handling necessary
         
         Ok(customer)
     }
@@ -56,18 +48,9 @@ impl CustomerRepository for InMemoryCustomerRepository {
             .ok_or_else(|| Error::NotFound(format!("Customer not found: {}", id)))
     }
     
-    async fn find_by_api_key(&self, api_key: &str) -> Result<Customer> {
-        // Get customer ID from API key map, but drop the lock before the await
-        let customer_id = {
-            let api_keys = self.api_keys.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
-            api_keys
-                .get(api_key)
-                .cloned()
-                .ok_or_else(|| Error::NotFound(format!("API key not found: {}", api_key)))?
-        };
-            
-        // Now find the customer with the ID (no lock held across await)
-        self.find_by_id(customer_id).await
+    async fn find_by_api_key(&self, _api_key: &str) -> Result<Customer> {
+        // Since API keys were removed from the model, return a not found error
+        Err(Error::NotFound("API key lookup is not supported".to_string()))
     }
     
     async fn update(&self, customer: Customer) -> Result<Customer> {
@@ -86,11 +69,7 @@ impl CustomerRepository for InMemoryCustomerRepository {
         
         customers.insert(updated_customer.id, updated_customer.clone());
         
-        // Update API key mapping if present
-        if let Some(api_key) = &updated_customer.api_key {
-            let mut api_keys = self.api_keys.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
-            api_keys.insert(api_key.clone(), updated_customer.id);
-        }
+        // No API key handling necessary
         
         Ok(updated_customer)
     }

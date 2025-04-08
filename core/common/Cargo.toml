@@ -21,7 +21,9 @@ async-trait.workspace = true
 
 # Database
 diesel.workspace = true
+diesel_migrations = "2.0"
 r2d2.workspace = true
+dotenvy.workspace = true
 
 # Redis
 redis.workspace = true

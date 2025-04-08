@@ -29,6 +29,9 @@ pub enum Error {
     #[error("Configuration error: {0}")]
     Configuration(String),
 
+    #[error("Transaction error: {0}")]
+    Transaction(String),
+
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
