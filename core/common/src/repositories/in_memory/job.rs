@@ -29,14 +29,14 @@ impl JobRepository for InMemoryJobRepository {
             customer_id: new_job.customer_id,
             job_type_id: new_job.job_type_id,
             status: JobStatus::from_str(&new_job.status).ok_or_else(|| Error::InvalidInput(format!("Invalid job status: {}", new_job.status)))?,
-            priority: PriorityLevel::from_i32(new_job.priority),
-            input_data: new_job.input_data,
+            priority: PriorityLevel::Medium, // Default value since not stored in DB
+            input_data: serde_json::Value::Null, // Default value since not stored in DB
             output_data: None,
             error: None,
-            estimated_cost_cents: new_job.estimated_cost_cents,
-            cost_cents: None,
+            estimated_cost_cents: new_job.cost_cents, // Use cost as estimate
+            cost_cents: new_job.cost_cents,
             created_at: Some(chrono::Utc::now().naive_utc()),
-            started_at: None,
+            updated_at: None,
             completed_at: None,
         };
         
@@ -71,7 +71,7 @@ impl JobRepository for InMemoryJobRepository {
             .ok_or_else(|| Error::NotFound(format!("Job not found: {}", id)))?;
             
         job.status = JobStatus::Running;
-        job.started_at = Some(chrono::Utc::now().naive_utc());
+        job.updated_at = Some(chrono::Utc::now().naive_utc()); // Use updated_at instead of started_at
         
         Ok(job.clone())
     }
@@ -82,7 +82,7 @@ impl JobRepository for InMemoryJobRepository {
         success: bool, 
         output: Option<serde_json::Value>, 
         error: Option<String>, 
-        cost_cents: Option<i32>
+        cost_cents: i32
     ) -> Result<Job> {
         let mut jobs = self.jobs.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
         
@@ -93,6 +93,7 @@ impl JobRepository for InMemoryJobRepository {
         job.output_data = output;
         job.error = error;
         job.cost_cents = cost_cents;
+        job.updated_at = Some(chrono::Utc::now().naive_utc());
         job.completed_at = Some(chrono::Utc::now().naive_utc());
         
         Ok(job.clone())
