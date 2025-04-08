@@ -71,7 +71,7 @@ impl JobStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PriorityLevel {
     Low = 0,
     Medium = 1,
