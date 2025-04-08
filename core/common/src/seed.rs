@@ -127,23 +127,17 @@ impl Seeder {
             NewCustomer {
                 id: Uuid::new_v4(),
                 name: "Acme Corporation".to_string(),
-                email: Some("contact@acme.example.com".to_string()),
-                api_key: Some("acme-api-key-2025".to_string()),
-                active: true,
+                email: "contact@acme.example.com".to_string(),
             },
             NewCustomer {
                 id: Uuid::new_v4(),
                 name: "TechStart Inc.".to_string(),
-                email: Some("info@techstart.example.com".to_string()),
-                api_key: Some("techstart-api-key-2025".to_string()),
-                active: true,
+                email: "info@techstart.example.com".to_string(),
             },
             NewCustomer {
                 id: Uuid::new_v4(),
                 name: "Global Services Ltd.".to_string(),
-                email: Some("support@globalservices.example.com".to_string()),
-                api_key: Some("globalservices-api-key-2025".to_string()),
-                active: true,
+                email: "support@globalservices.example.com".to_string(),
             },
         ];
 
@@ -174,8 +168,6 @@ impl Seeder {
                 id: Uuid::new_v4(),
                 customer_id: customer.id,
                 balance_cents: 10000, // Start with $100 balance
-                pending_charges_cents: 0,
-                currency: "EUR".to_string()
             };
 
             self.wallet_repo.create(new_wallet).await?;

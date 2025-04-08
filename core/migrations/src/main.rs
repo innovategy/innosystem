@@ -1,8 +1,7 @@
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
 use innosystem_common::{migrations, seed::{Seeder}, database};
-use innosystem_common::repositories::diesel::{DieselJobTypeRepository, DieselJobRepository};
-use innosystem_common::repositories::in_memory::{InMemoryCustomerRepository, InMemoryWalletRepository};
+use innosystem_common::repositories::diesel::{DieselJobTypeRepository, DieselJobRepository, DieselCustomerRepository, DieselWalletRepository};
 use innosystem_common::repositories::{job_type::JobTypeRepository, customer::CustomerRepository, job::JobRepository, wallet::WalletRepository};
 use std::env;
 use std::error::Error;
@@ -77,10 +76,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             
             // For repositories that don't have Diesel implementations yet, we'll need to implement those
             // or use in-memory implementations for now
-            println!("Note: Using in-memory repositories for customer and wallet - these will be replaced with Diesel implementations in the future");
+            println!("Using Diesel repositories for all entity types");
             // Using in-memory implementations for repositories that don't have Diesel implementations yet
-            let customer_repo: Arc<dyn CustomerRepository + Send + Sync> = Arc::new(InMemoryCustomerRepository::new());
-            let wallet_repo: Arc<dyn WalletRepository + Send + Sync> = Arc::new(InMemoryWalletRepository::new());
+            let customer_repo: Arc<dyn CustomerRepository + Send + Sync> = Arc::new(DieselCustomerRepository::new(pool.clone()));
+            let wallet_repo: Arc<dyn WalletRepository + Send + Sync> = Arc::new(DieselWalletRepository::new(pool.clone()));
             
             let job_repo: Arc<dyn JobRepository + Send + Sync> = Arc::new(DieselJobRepository::new(pool.clone()));
             
@@ -92,10 +91,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 wallet_repo
             );
             
-            // Only seed job types for now because we're using in-memory repositories for others
-            // Once Diesel repositories are implemented for all entities, we can use seed_all()
-            println!("Note: Currently only seeding job types as other repositories are in-memory");
-            seeder.seed_job_types().await?;
+            // Seed all entity types now that we have proper Diesel repositories for all
+            println!("Seeding all entity types: job types, customers, wallets, and jobs...");
+            seeder.seed_all().await?;
             
             println!("Seed data successfully inserted into database.");
         },

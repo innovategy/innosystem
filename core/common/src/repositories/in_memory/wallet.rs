@@ -34,8 +34,6 @@ impl WalletRepository for InMemoryWalletRepository {
             id: new_wallet.id,
             customer_id: new_wallet.customer_id,
             balance_cents: new_wallet.balance_cents,
-            pending_charges_cents: new_wallet.pending_charges_cents,
-            currency: new_wallet.currency,
             created_at: Some(chrono::Utc::now().naive_utc()),
             updated_at: Some(chrono::Utc::now().naive_utc()),
         };
@@ -74,7 +72,7 @@ impl WalletRepository for InMemoryWalletRepository {
         self.find_by_id(wallet_id).await
     }
     
-    async fn update_balance(&self, id: Uuid, new_balance: i64) -> Result<Wallet> {
+    async fn update_balance(&self, id: Uuid, new_balance: i32) -> Result<Wallet> {
         let mut wallets = self.wallets.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
         
         let wallet = wallets.get_mut(&id)
@@ -86,7 +84,7 @@ impl WalletRepository for InMemoryWalletRepository {
         Ok(wallet.clone())
     }
     
-    async fn reserve_funds(&self, id: Uuid, amount: i64) -> Result<Wallet> {
+    async fn reserve_funds(&self, id: Uuid, amount: i32) -> Result<Wallet> {
         let mut wallets = self.wallets.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
         
         let wallet = wallets.get_mut(&id)
@@ -96,19 +94,23 @@ impl WalletRepository for InMemoryWalletRepository {
             return Err(Error::InsufficientFunds(format!("Insufficient funds. Available: {}, Requested: {}", wallet.available_balance(), amount)));
         }
         
-        wallet.pending_charges_cents += amount;
+        // Since pending_charges_cents was removed, we'll just update the balance directly
+        // Reserving funds means reducing the available balance
+        wallet.balance_cents -= amount;
         wallet.updated_at = Some(chrono::Utc::now().naive_utc());
         
         Ok(wallet.clone())
     }
     
-    async fn release_reservation(&self, id: Uuid, amount: i64) -> Result<Wallet> {
+    async fn release_reservation(&self, id: Uuid, amount: i32) -> Result<Wallet> {
         let mut wallets = self.wallets.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
         
         let wallet = wallets.get_mut(&id)
             .ok_or_else(|| Error::NotFound(format!("Wallet not found: {}", id)))?;
             
-        wallet.pending_charges_cents -= amount.min(wallet.pending_charges_cents);
+        // Since pending_charges_cents was removed, we'll just update the balance directly
+        // Releasing a reservation means adding back to the available balance
+        wallet.balance_cents += amount;
         wallet.updated_at = Some(chrono::Utc::now().naive_utc());
         
         Ok(wallet.clone())
@@ -118,10 +120,9 @@ impl WalletRepository for InMemoryWalletRepository {
         let transaction = WalletTransaction {
             id: new_transaction.id,
             wallet_id: new_transaction.wallet_id,
-            customer_id: new_transaction.customer_id,
             amount_cents: new_transaction.amount_cents,
-            job_id: new_transaction.job_id,
-            description: new_transaction.description,
+            transaction_type: new_transaction.transaction_type,
+            reference_id: new_transaction.reference_id,
             created_at: Some(chrono::Utc::now().naive_utc()),
         };
         
