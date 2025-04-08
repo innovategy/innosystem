@@ -64,7 +64,35 @@ services:
     networks:
       - innosystem-network
       
-
+  # Migrations service
+  migrations:
+    build:
+      context: ./
+      dockerfile: core/migrations/Dockerfile
+    container_name: innosystem-migrations
+    depends_on:
+      - postgres
+    environment:
+      - RUST_LOG=debug
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/innosystem
+    networks:
+      - innosystem-network
+      
+  # Tester service
+  tester:
+    build:
+      context: ./
+      dockerfile: core/tester/Dockerfile
+    container_name: innosystem-tester
+    depends_on:
+      - api
+      - postgres
+    environment:
+      - RUST_LOG=debug
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - innosystem-network
 
 networks:
   innosystem-network:
