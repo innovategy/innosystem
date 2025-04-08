@@ -92,7 +92,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 wallet_repo
             );
             
-            seeder.seed_all().await?;
+            // Only seed job types for now because we're using in-memory repositories for others
+            // Once Diesel repositories are implemented for all entities, we can use seed_all()
+            println!("Note: Currently only seeding job types as other repositories are in-memory");
+            seeder.seed_job_types().await?;
             
             println!("Seed data successfully inserted into database.");
         },
