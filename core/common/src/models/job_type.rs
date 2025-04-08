@@ -19,6 +19,21 @@ pub enum ProcessorType {
     Webhook,
 }
 
+// Implement Queryable for ProcessorType
+impl Queryable<Text, Pg> for ProcessorType {
+    type Row = String;
+    
+    fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
+        match ProcessorType::from_str(&row) {
+            Some(processor_type) => Ok(processor_type),
+            None => {
+                let error_message = format!("Unrecognized processor type: {}", row);
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, error_message)))
+            }
+        }
+    }
+}
+
 
 
 // Implement ToSql for ProcessorType (convert from Rust type to SQL type)
@@ -69,8 +84,9 @@ impl ProcessorType {
 }
 
 // Updated for Phase 2 with Diesel support
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable, Selectable)]
 #[diesel(table_name = job_types)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct JobType {
     pub id: Uuid,
     pub name: String,
