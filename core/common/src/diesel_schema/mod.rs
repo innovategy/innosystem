@@ -1,4 +1,6 @@
 // Define schema for Diesel
+use diesel::prelude::*;
+
 table! {
     job_types (id) {
         id -> Uuid,

@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
+
+use crate::diesel_schema::job_types;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProcessorType {
@@ -10,6 +13,8 @@ pub enum ProcessorType {
     Batch,
     Webhook,
 }
+
+
 
 impl ProcessorType {
     pub fn as_str(&self) -> &'static str {
@@ -34,8 +39,9 @@ impl ProcessorType {
     }
 }
 
-// In-memory version for Phase 1
-#[derive(Debug, Clone, Serialize, Deserialize)]
+// Updated for Phase 2 with Diesel support
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable)]
+#[diesel(table_name = job_types)]
 pub struct JobType {
     pub id: Uuid,
     pub name: String,
@@ -69,8 +75,9 @@ impl JobType {
     }
 }
 
-// Will be used in Phase 2 for DB insertion
-#[derive(Debug, Clone, Serialize, Deserialize)]
+// For DB insertion with Diesel
+#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = job_types)]
 pub struct NewJobType {
     pub id: Uuid,
     pub name: String,

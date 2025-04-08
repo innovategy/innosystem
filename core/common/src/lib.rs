@@ -3,6 +3,7 @@ pub mod repositories;
 pub mod errors;
 pub mod queue;
 pub mod config;
+pub mod diesel_schema;
 
 /// Re-export commonly used types
 pub use errors::Error;
