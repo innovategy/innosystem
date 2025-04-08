@@ -7,6 +7,13 @@ use crate::errors::Error;
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 pub type PgPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
 
+// Define a trait for transaction operations
+pub trait Transaction {
+    fn run_in_transaction<F, T>(&self, f: F) -> Result<T, Error>
+    where
+        F: FnOnce(&mut PgConnection) -> Result<T, diesel::result::Error>;
+}
+
 /// Initialize database connection pool
 pub fn init_pool() -> Result<PgPool, Error> {
     let database_url = env::var("DATABASE_URL")
@@ -22,6 +29,32 @@ pub fn init_pool() -> Result<PgPool, Error> {
 pub fn get_connection(pool: &PgPool) -> Result<PgPooledConnection, Error> {
     pool.get()
         .map_err(|e| Error::Configuration(format!("Failed to get DB connection from pool: {}", e)))
+}
+
+/// Execute a function within a transaction
+pub fn transaction<F, T>(conn: &mut PgConnection, f: F) -> Result<T, Error>
+where
+    F: FnOnce(&mut PgConnection) -> Result<T, diesel::result::Error>,
+{
+    conn.transaction(|conn| f(conn))
+        .map_err(|e| {
+            if let diesel::result::Error::RollbackTransaction = e {
+                Error::Transaction("Transaction was rolled back".to_string())
+            } else {
+                Error::Database(e)
+            }
+        })
+}
+
+// Implement Transaction trait for PgPool
+impl Transaction for PgPool {
+    fn run_in_transaction<F, T>(&self, f: F) -> Result<T, Error>
+    where
+        F: FnOnce(&mut PgConnection) -> Result<T, diesel::result::Error>,
+    {
+        let mut conn = get_connection(self)?;
+        transaction(&mut conn, f)
+    }
 }
 
 /// Validate that all models match the database schema

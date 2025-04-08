@@ -5,7 +5,7 @@ use diesel::dsl::{count_star, sum};
 // No need to import private BoxedSelectStatement type
 use uuid::Uuid;
 
-use crate::database::{get_connection, PgPool};
+use crate::database::{get_connection, PgPool, Transaction};
 use crate::diesel_schema::jobs;
 use crate::errors::Error;
 use crate::models::job::{Job, JobDb, JobStatus, NewJob};
@@ -128,7 +128,7 @@ impl JobRepository for DieselJobRepository {
         let _ = jobs::table
             .find(id)
             .select(JobDb::as_select())
-            .first(&mut conn)
+            .first::<JobDb>(&mut conn)
             .map_err(|e| match e {
                 diesel::result::Error::NotFound => Error::NotFound(format!("Job not found: {}", id)),
                 e => Error::Database(e),
@@ -137,7 +137,10 @@ impl JobRepository for DieselJobRepository {
         // Update the status
         let job_db = diesel::update(jobs::table)
             .filter(jobs::id.eq(id))
-            .set(jobs::status.eq(status.as_str()))
+            .set((
+                jobs::status.eq(status.as_str()),
+                jobs::updated_at.eq(diesel::dsl::now),
+            ))
             .returning(JobDb::as_select())
             .get_result(&mut conn)
             .map_err(|e| Error::Database(e))?;
@@ -175,36 +178,33 @@ impl JobRepository for DieselJobRepository {
         error: Option<String>, 
         cost_cents: i32
     ) -> Result<Job> {
-        let mut conn = get_connection(&self.pool)?;
-        
-        let status = if success { JobStatus::Succeeded } else { JobStatus::Failed };
-        
-        // Use the provided cost directly since it's now a required parameter
-        
-        // Update the job with completion data
-        let job_db = diesel::update(jobs::table)
-            .filter(jobs::id.eq(id))
-            .set((
-                jobs::status.eq(status.as_str()),
-                jobs::cost_cents.eq(cost_cents),
-                jobs::completed_at.eq(diesel::dsl::now),
-                jobs::updated_at.eq(diesel::dsl::now),
-            ))
-            .returning(JobDb::as_select())
-            .get_result(&mut conn)
-            .map_err(|e| match e {
-                diesel::result::Error::NotFound => Error::NotFound(format!("Job not found: {}", id)),
-                e => Error::Database(e),
-            })?;
-        
-        // Create a Job from JobDb and add the non-DB fields
-        let mut job = Job::from(job_db);
-        
-        // Set the fields that aren't in the database
-        job.output_data = output;
-        job.error = error;
-        
-        Ok(job)
+        // Use transaction to ensure atomicity of job completion
+        self.pool.run_in_transaction(|conn| {
+            let status = if success { JobStatus::Succeeded } else { JobStatus::Failed };
+            
+            // Use the provided cost directly since it's now a required parameter
+            
+            // Update the job with completion data within transaction
+            let job_db = diesel::update(jobs::table)
+                .filter(jobs::id.eq(id))
+                .set((
+                    jobs::status.eq(status.as_str()),
+                    jobs::cost_cents.eq(cost_cents),
+                    jobs::completed_at.eq(diesel::dsl::now),
+                    jobs::updated_at.eq(diesel::dsl::now),
+                ))
+                .returning(JobDb::as_select())
+                .get_result(conn)?;
+            
+            // Create a Job from JobDb and add the non-DB fields
+            let mut job = Job::from(job_db);
+            
+            // Set the fields that aren't in the database
+            job.output_data = output;
+            job.error = error;
+            
+            Ok(job)
+        })
     }
     
     async fn find_by_customer_id(&self, customer_id: Uuid) -> Result<Vec<Job>> {
@@ -240,8 +240,9 @@ impl JobRepository for DieselJobRepository {
         
         let jobs_db = jobs::table
             .filter(jobs::status.eq(JobStatus::Pending.as_str()))
-            .select(JobDb::as_select())
+            .order(jobs::created_at.asc())
             .limit(limit.into())
+            .select(JobDb::as_select())
             .load(&mut conn)
             .map_err(|e| Error::Database(e))?;
             
@@ -255,34 +256,36 @@ impl JobRepository for DieselJobRepository {
         
         // First, let's create a count query with the same filters
         let count_query = jobs::table.into_boxed();
-        let count_query = self.apply_filters(count_query, &filter);
+        let filtered_count_query = self.apply_filters(count_query, &filter);
         
-        // Get the total count
-        let total_count: i64 = count_query
+        // Execute the count query
+        let total: i64 = filtered_count_query
             .count()
             .get_result(&mut conn)
             .map_err(|e| Error::Database(e))?;
         
-        // Now create a separate query for fetching the data
-        let base_query = jobs::table.into_boxed();
-        let filtered_query = self.apply_filters(base_query, &filter);
+        // Then let's create our data query
+        let query = jobs::table.into_boxed();
+        
+        // Apply filters
+        let filtered_query = self.apply_filters(query, &filter);
         
         // Apply sorting
         let sorted_query = self.apply_sorting(filtered_query, &sort);
         
         // Apply pagination
-        let paginated_query = self.apply_pagination(sorted_query, &pagination);
+        let final_query = self.apply_pagination(sorted_query, &pagination);
         
         // Execute the query
-        let jobs_db = paginated_query
+        let jobs_db = final_query
             .select(JobDb::as_select())
             .load(&mut conn)
             .map_err(|e| Error::Database(e))?;
-        
-        // Convert to application models
+            
+        // Convert database models to application models
         let jobs = jobs_db.into_iter().map(Job::from).collect();
         
-        Ok((jobs, total_count as u64))
+        Ok((jobs, total as u64))
     }
     
     async fn get_job_stats_by_status(&self) -> Result<Vec<(String, i64)>> {
@@ -380,18 +383,18 @@ impl JobRepository for DieselJobRepository {
             return Ok(0);
         }
         
-        let mut conn = get_connection(&self.pool)?;
-        
-        // Update all jobs with the given IDs to the new status
-        let updated_count = diesel::update(jobs::table)
-            .filter(jobs::id.eq_any(ids))
-            .set((
-                jobs::status.eq(status.as_str()),
-                jobs::updated_at.eq(diesel::dsl::now),
-            ))
-            .execute(&mut conn)
-            .map_err(|e| Error::Database(e))?;
-        
-        Ok(updated_count)
+        // Use transaction to ensure atomicity
+        self.pool.run_in_transaction(|conn| {
+            // Update all jobs with the given IDs to the new status
+            let updated_count = diesel::update(jobs::table)
+                .filter(jobs::id.eq_any(ids))
+                .set((
+                    jobs::status.eq(status.as_str()),
+                    jobs::updated_at.eq(diesel::dsl::now),
+                ))
+                .execute(conn)?;
+            
+            Ok(updated_count)
+        })
     }
 }
