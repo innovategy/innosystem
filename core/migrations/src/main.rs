@@ -1,8 +1,12 @@
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
-use innosystem_common::migrations;
+use innosystem_common::{migrations, seed::{Seeder}, database};
+use innosystem_common::repositories::diesel::{DieselJobTypeRepository, DieselJobRepository};
+use innosystem_common::repositories::in_memory::{InMemoryCustomerRepository, InMemoryWalletRepository};
+use innosystem_common::repositories::{job_type::JobTypeRepository, customer::CustomerRepository, job::JobRepository, wallet::WalletRepository};
 use std::env;
 use std::error::Error;
+use std::sync::Arc;
 
 /// Innosystem Database Migration Tool
 #[derive(Parser)]
@@ -25,6 +29,10 @@ enum Commands {
     /// Rerun the last migration (useful for development)
     #[clap(name = "rerun-latest")]
     RerunLatest,
+
+    /// Seed the database with development data
+    #[clap(name = "seed")]
+    Seed,
 }
 
 #[tokio::main]
@@ -53,6 +61,40 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Commands::RerunLatest => {
             println!("Rerun latest migration feature not yet implemented.");
             println!("This will be added in a future update.");
+        },
+        Commands::Seed => {
+            println!("Seeding database with development data...");
+            
+            // First, ensure migrations are run
+            println!("Running migrations to ensure schema is up to date...");
+            migrations::run_migrations(&database_url)?;
+            
+            // Initialize database connection pool
+            let pool = database::init_pool()?;
+            
+            // Create repository implementations
+            let job_type_repo: Arc<dyn JobTypeRepository + Send + Sync> = Arc::new(DieselJobTypeRepository::new(pool.clone()));
+            
+            // For repositories that don't have Diesel implementations yet, we'll need to implement those
+            // or use in-memory implementations for now
+            println!("Note: Using in-memory repositories for customer and wallet - these will be replaced with Diesel implementations in the future");
+            // Using in-memory implementations for repositories that don't have Diesel implementations yet
+            let customer_repo: Arc<dyn CustomerRepository + Send + Sync> = Arc::new(InMemoryCustomerRepository::new());
+            let wallet_repo: Arc<dyn WalletRepository + Send + Sync> = Arc::new(InMemoryWalletRepository::new());
+            
+            let job_repo: Arc<dyn JobRepository + Send + Sync> = Arc::new(DieselJobRepository::new(pool.clone()));
+            
+            // Create and run seeder
+            let seeder = Seeder::new(
+                job_type_repo,
+                customer_repo,
+                job_repo,
+                wallet_repo
+            );
+            
+            seeder.seed_all().await?;
+            
+            println!("Seed data successfully inserted into database.");
         },
     }
     
