@@ -5,6 +5,7 @@ pub mod queue;
 pub mod config;
 pub mod diesel_schema;
 pub mod database;
+pub mod migrations;
 
 /// Re-export commonly used types
 pub use errors::Error;

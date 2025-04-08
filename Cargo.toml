@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "core/api",
     "core/common",
+    "core/migrations",
     "core/runner",
     "core/tester",
 ]
@@ -23,7 +24,7 @@ axum-macros = "0.5.0"
 bb8-redis = "0.21.0"
 chrono = { version = "0.4.40", features = ["serde"] }
 clap = { version = "4.5.35", features = ["derive"] }
-diesel = "2.2.8"
+diesel = { version = "2.2.8", features = ["postgres", "chrono", "uuid", "r2d2"] }
 diesel_migrations = "2.2.0"
 dotenv = "0.15.0"
 dotenvy = "0.15.7"
