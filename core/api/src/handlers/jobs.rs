@@ -180,47 +180,44 @@ pub async fn get_job(
 /// Get all jobs
 #[allow(dead_code)]
 pub async fn get_all_jobs(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<JobResponse>>, StatusCode> {
-    // In a real implementation, we would fetch jobs from the database
-    // For now, we'll just return a mock list of jobs
+    // Create default filter and pagination
+    let filter = innosystem_common::repositories::job::JobFilter::default();
+    let sort = Some(innosystem_common::repositories::job::JobSortOrder::CreatedDesc);
+    let pagination = None; // Get all jobs without pagination
     
-    let now = chrono::Utc::now().to_rfc3339();
+    // Fetch all jobs from the repository using query_jobs
+    let (jobs, _total_count) = state.job_repo.query_jobs(filter, sort, pagination).await
+        .map_err(|e| {
+            tracing::error!("Failed to fetch jobs: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     
-    // Create two mock jobs
-    let jobs = vec![
+    // Convert the jobs to the response format
+    let job_responses = jobs.into_iter().map(|job| {
+        // Convert the timestamps to RFC3339 strings if they exist
+        let created_at = job.created_at.map(|dt| dt.and_utc().to_rfc3339());
+        let updated_at = job.updated_at.map(|dt| dt.and_utc().to_rfc3339());
+        let completed_at = job.completed_at.map(|dt| dt.and_utc().to_rfc3339());
+        
         JobResponse {
-            id: Uuid::new_v4(),
-            customer_id: Uuid::new_v4(),
-            job_type_id: Uuid::new_v4(),
-            status: "Pending".to_string(),
-            priority: 1,
-            input_data: serde_json::json!({"data": "example"}),
-            output_data: None,
-            error: None,
-            estimated_cost_cents: 1000,
-            cost_cents: None,
-            created_at: Some(now.clone()),
-            started_at: None,
-            completed_at: None,
-        },
-        JobResponse {
-            id: Uuid::new_v4(),
-            customer_id: Uuid::new_v4(),
-            job_type_id: Uuid::new_v4(),
-            status: "Completed".to_string(),
-            priority: 2,
-            input_data: serde_json::json!({"data": "another example"}),
-            output_data: Some(serde_json::json!({"result": "success"})),
-            error: None,
-            estimated_cost_cents: 2000,
-            cost_cents: Some(1950),
-            created_at: Some(now.clone()),
-            started_at: Some(now.clone()),
-            completed_at: Some(now.clone()),
-        },
-    ];
+            id: job.id,
+            customer_id: job.customer_id,
+            job_type_id: job.job_type_id,
+            status: job.status.as_str().to_string(),
+            priority: job.priority.as_i32(),
+            input_data: job.input_data,
+            output_data: job.output_data,
+            error: job.error,
+            estimated_cost_cents: job.estimated_cost_cents,
+            cost_cents: Some(job.cost_cents),
+            created_at,
+            started_at: updated_at,
+            completed_at,
+        }
+    }).collect();
     
-    tracing::info!("Retrieved all jobs");
-    Ok(Json(jobs))
+    tracing::info!("Retrieved all jobs from database");
+    Ok(Json(job_responses))
 }
