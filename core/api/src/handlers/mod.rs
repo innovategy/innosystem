@@ -6,3 +6,4 @@ pub mod resellers;
 pub mod projects;
 pub mod runners;
 pub mod wallet;
+pub mod runner_health;

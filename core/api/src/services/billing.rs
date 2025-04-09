@@ -3,9 +3,7 @@ use uuid::Uuid;
 use anyhow::{Result, Context, anyhow};
 use tracing::{info, error, warn};
 
-use innosystem_common::models::job::Job;
-use innosystem_common::models::job_type::JobType;
-use innosystem_common::models::wallet::TransactionType;
+// Import wallet models when needed
 use innosystem_common::repositories::{JobRepository, JobTypeRepository, WalletRepository, CustomerRepository};
 
 /// Service for handling billing and cost calculation operations
@@ -96,8 +94,7 @@ impl BillingService {
         
         // Perform the wallet transaction
         // Use the correct transaction type from the model
-        // JobDebit for successful jobs, still JobDebit for failed jobs but with different description
-        let transaction_type = TransactionType::JobDebit.to_string();
+        // JobDebit for all jobs (successful and failed) with different descriptions
         
         let description = format!(
             "{} job {} - {}",

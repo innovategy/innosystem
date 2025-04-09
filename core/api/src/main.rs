@@ -109,6 +109,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/runners/:id", get(handlers::runners::get_runner))
         .route("/runners/:id/capabilities", put(handlers::runners::update_capabilities))
         .route("/runners/:id/status", put(handlers::runners::set_runner_status))
+        
+        // Runner health and compatibility endpoints - require admin auth
+        .route("/runners/:id/health", get(handlers::runner_health::check_runner_health))
+        .route("/runners/:runner_id/compatible/:job_type_id", get(handlers::runner_health::check_compatibility))
+        .route("/job-types/:job_type_id/compatible-runners", get(handlers::runner_health::find_compatible_runners))
+        .route("/runners/maintenance/reassign-jobs", post(handlers::runner_health::check_and_reassign_jobs))
         .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
         
         // Customers endpoints - require reseller auth

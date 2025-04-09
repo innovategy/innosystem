@@ -8,7 +8,7 @@ use innosystem_common::{
 };
 
 use crate::config::AppConfig;
-use crate::services::BillingService;
+use crate::services::{BillingService, RunnerHealthService};
 
 /// Application state shared across API handlers
 /// Kept as a contract for the application's shared state
@@ -32,6 +32,8 @@ pub struct AppState {
     pub config: AppConfig,
     #[allow(dead_code)]
     pub billing_service: Arc<BillingService>,
+    #[allow(dead_code)]
+    pub runner_health_service: Arc<RunnerHealthService>,
 }
 
 impl AppState {
@@ -76,6 +78,14 @@ impl AppState {
             customer_repo.clone(),
         ));
         
+        // Initialize the runner health service
+        let runner_health_service = Arc::new(RunnerHealthService::new(
+            job_repo.clone(),
+            job_type_repo.clone(),
+            runner_repo.clone(),
+            None, // Use default config
+        ));
+        
         Ok(AppState {
             customer_repo,
             job_repo,
@@ -87,6 +97,7 @@ impl AppState {
             job_queue,
             config,
             billing_service,
+            runner_health_service,
         })
     }
 }
