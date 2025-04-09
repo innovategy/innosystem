@@ -7,9 +7,9 @@ use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::deserialize::{self, FromSql};
 use diesel::sql_types::Text;
 use std::io::Write;
-// We don't need these imports as we're using Vec<String> directly
 
-use crate::diesel_schema::runners;
+use crate::diesel_schema::{runners, runner_job_type_compatibility};
+use crate::models::job_type::JobType;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RunnerStatus {
@@ -148,4 +148,23 @@ impl From<Runner> for NewRunner {
             compatible_job_types: runner.compatible_job_types,
         }
     }
+}
+
+// For joining runners and job types
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable, Associations)]
+#[diesel(belongs_to(Runner))]
+#[diesel(belongs_to(JobType))]
+#[diesel(table_name = runner_job_type_compatibility)]
+#[diesel(primary_key(runner_id, job_type_id))]
+pub struct JobTypeCompatibility {
+    pub runner_id: Uuid,
+    pub job_type_id: Uuid,
+    pub created_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = runner_job_type_compatibility)]
+pub struct NewJobTypeCompatibility {
+    pub runner_id: Uuid,
+    pub job_type_id: Uuid,
 }

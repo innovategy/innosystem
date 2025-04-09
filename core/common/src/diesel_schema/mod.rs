@@ -94,9 +94,18 @@ table! {
         wallet_id -> Uuid,
         amount_cents -> Integer,
         transaction_type -> Text,
+        customer_id -> Uuid,
         reference_id -> Nullable<Uuid>,
         description -> Nullable<Text>,
         job_id -> Nullable<Uuid>,
+        created_at -> Nullable<Timestamp>,
+    }
+}
+
+table! {
+    runner_job_type_compatibility (runner_id, job_type_id) {
+        runner_id -> Uuid,
+        job_type_id -> Uuid,
         created_at -> Nullable<Timestamp>,
     }
 }
@@ -110,4 +119,5 @@ allow_tables_to_appear_in_same_query!(
     resellers,
     projects,
     runners,
+    runner_job_type_compatibility,
 );

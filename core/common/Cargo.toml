@@ -29,6 +29,7 @@ dotenvy.workspace = true
 redis.workspace = true
 bb8-redis.workspace = true
 bigdecimal = "0.4.8"
+rand.workspace = true
 
 [lib]
 name = "innosystem_common"
