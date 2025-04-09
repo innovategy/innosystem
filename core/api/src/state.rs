@@ -3,8 +3,8 @@ use std::sync::Arc;
 use diesel;
 use innosystem_common::{
     queue::{JobQueue, JobQueueConfig, RedisJobQueue, QueueError},
-    repositories::{CustomerRepository, JobRepository, JobTypeRepository, WalletRepository, ResellerRepository},
-    repositories::{DieselCustomerRepository, DieselJobRepository, DieselJobTypeRepository, DieselWalletRepository, DieselResellerRepository},
+    repositories::{CustomerRepository, JobRepository, JobTypeRepository, WalletRepository, ResellerRepository, ProjectRepository, RunnerRepository},
+    repositories::{DieselCustomerRepository, DieselJobRepository, DieselJobTypeRepository, DieselWalletRepository, DieselResellerRepository, DieselProjectRepository, DieselRunnerRepository},
 };
 
 use crate::config::AppConfig;
@@ -22,6 +22,10 @@ pub struct AppState {
     pub wallet_repo: Arc<dyn WalletRepository>,
     #[allow(dead_code)]
     pub reseller_repo: Arc<dyn ResellerRepository>,
+    #[allow(dead_code)]
+    pub project_repo: Arc<dyn ProjectRepository>,
+    #[allow(dead_code)]
+    pub runner_repo: Arc<dyn RunnerRepository>,
     pub job_queue: Arc<dyn JobQueue>,
     #[allow(dead_code)]
     pub config: AppConfig,
@@ -54,6 +58,8 @@ impl AppState {
         let job_type_repo = Arc::new(DieselJobTypeRepository::new(pool.clone()));
         let wallet_repo = Arc::new(DieselWalletRepository::new(pool.clone()));
         let reseller_repo = Arc::new(DieselResellerRepository::new(pool.clone()));
+        let project_repo = Arc::new(DieselProjectRepository::new(pool.clone()));
+        let runner_repo = Arc::new(DieselRunnerRepository::new(pool.clone()));
         
         // Initialize Redis job queue
         let queue_config = JobQueueConfig::new(config.redis_url.clone().unwrap_or_else(|| "redis://redis:6379".to_string()));
@@ -65,6 +71,8 @@ impl AppState {
             job_type_repo,
             wallet_repo,
             reseller_repo,
+            project_repo,
+            runner_repo,
             job_queue,
             config,
         })

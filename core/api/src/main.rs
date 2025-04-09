@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use axum::{Router, routing::{get, post}};
+use axum::{Router, routing::{get, post, put}};
 use axum::middleware::from_fn_with_state;
 
 mod config;
@@ -68,17 +68,38 @@ async fn main() -> anyhow::Result<()> {
             .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::reseller_auth))
         )
         
+        // Runner heartbeat endpoint (public - no auth required)
+        .route("/runners/:id/heartbeat", post(handlers::runners::update_heartbeat))
+        
         // Regular API routes with appropriate authentication
         // Jobs endpoints - require customer auth
         .route("/jobs", get(handlers::jobs::get_all_jobs)
                         .post(handlers::jobs::create_job))
         .route("/jobs/{id}", get(handlers::jobs::get_job))
+        
+        // Project endpoints - require customer auth
+        .route("/projects", get(handlers::projects::list_customer_projects)
+                           .post(handlers::projects::create_project))
+        .route("/projects/:id", get(handlers::projects::get_project)
+                               .put(handlers::projects::update_project)
+                               .delete(handlers::projects::delete_project))
         .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::customer_auth))
         
         // Job types endpoints - require admin auth
         .route("/job-types", get(handlers::job_types::get_all_job_types)
                              .post(handlers::job_types::create_job_type))
         .route("/job-types/{id}", get(handlers::job_types::get_job_type))
+        
+        // Admin project endpoints - require admin auth
+        .route("/all-projects", get(handlers::projects::list_all_projects))
+        
+        // Runner management endpoints - require admin auth
+        .route("/runners", get(handlers::runners::list_all_runners)
+                          .post(handlers::runners::register_runner))
+        .route("/runners/active", get(handlers::runners::list_active_runners))
+        .route("/runners/:id", get(handlers::runners::get_runner))
+        .route("/runners/:id/capabilities", put(handlers::runners::update_capabilities))
+        .route("/runners/:id/status", put(handlers::runners::set_runner_status))
         .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
         
         // Customers endpoints - require reseller auth
