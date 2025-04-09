@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use axum::{Router, routing::get};
+use axum::{Router, routing::{get, post}};
 use axum::middleware::from_fn_with_state;
 
 mod config;
@@ -50,13 +50,21 @@ async fn main() -> anyhow::Result<()> {
         
         // Admin routes (admin authentication required)
         .nest("/admin", Router::new()
-            // Add admin-only endpoints here
+            // Reseller management endpoints (admin only)
+            .route("/resellers", get(handlers::resellers::get_all_resellers)
+                                .post(handlers::resellers::create_reseller))
+            .route("/resellers/active", get(handlers::resellers::get_active_resellers))
+            .route("/resellers/:id", get(handlers::resellers::get_reseller)
+                                    .put(handlers::resellers::update_reseller))
+            .route("/resellers/:id/regenerate-key", post(handlers::resellers::regenerate_api_key))
             .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
         )
         
         // Reseller routes (reseller authentication required)
         .nest("/reseller", Router::new()
-            // Add reseller-only endpoints here
+            // Endpoints accessible to resellers
+            .route("/profile", get(handlers::resellers::get_current_reseller_profile))
+            .route("/active-resellers", get(handlers::resellers::get_active_resellers))
             .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::reseller_auth))
         )
         

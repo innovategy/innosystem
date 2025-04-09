@@ -3,8 +3,8 @@ use std::sync::Arc;
 use diesel;
 use innosystem_common::{
     queue::{JobQueue, JobQueueConfig, RedisJobQueue, QueueError},
-    repositories::{CustomerRepository, JobRepository, JobTypeRepository, WalletRepository},
-    repositories::{DieselCustomerRepository, DieselJobRepository, DieselJobTypeRepository, DieselWalletRepository},
+    repositories::{CustomerRepository, JobRepository, JobTypeRepository, WalletRepository, ResellerRepository},
+    repositories::{DieselCustomerRepository, DieselJobRepository, DieselJobTypeRepository, DieselWalletRepository, DieselResellerRepository},
 };
 
 use crate::config::AppConfig;
@@ -20,6 +20,8 @@ pub struct AppState {
     pub job_type_repo: Arc<dyn JobTypeRepository>,
     #[allow(dead_code)]
     pub wallet_repo: Arc<dyn WalletRepository>,
+    #[allow(dead_code)]
+    pub reseller_repo: Arc<dyn ResellerRepository>,
     pub job_queue: Arc<dyn JobQueue>,
     #[allow(dead_code)]
     pub config: AppConfig,
@@ -51,6 +53,7 @@ impl AppState {
         let job_repo = Arc::new(DieselJobRepository::new(pool.clone()));
         let job_type_repo = Arc::new(DieselJobTypeRepository::new(pool.clone()));
         let wallet_repo = Arc::new(DieselWalletRepository::new(pool.clone()));
+        let reseller_repo = Arc::new(DieselResellerRepository::new(pool.clone()));
         
         // Initialize Redis job queue
         let queue_config = JobQueueConfig::new(config.redis_url.clone().unwrap_or_else(|| "redis://redis:6379".to_string()));
@@ -61,6 +64,7 @@ impl AppState {
             job_repo,
             job_type_repo,
             wallet_repo,
+            reseller_repo,
             job_queue,
             config,
         })
