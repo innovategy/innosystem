@@ -1,4 +1,4 @@
-FROM rust:1.85.1-slim-bookworm as builder
+FROM rust:1.86.0-slim-bookworm as builder
 
 # Install PostgreSQL client libraries needed for diesel compilation
 RUN apt-get update && \

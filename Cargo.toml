@@ -5,14 +5,13 @@ members = [
     "core/common",
     "core/migrations",
     "core/runner",
-    "core/tester",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85.1"
-authors = ["InnoSystem Team"]
+rust-version = "1.86.0"
+authors = ["Innovategy Oy"]
 
 [workspace.dependencies]
 # Core dependencies

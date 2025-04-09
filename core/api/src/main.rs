@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
         
         // Public routes (no authentication needed)
         .nest("/public", Router::new()
-            // Add public endpoints here
+            // Test endpoints for debugging (no auth required)
         )
         
         // Admin routes (admin authentication required)

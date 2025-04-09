@@ -21,14 +21,13 @@ async-trait.workspace = true
 
 # Database
 diesel.workspace = true
-diesel_migrations = "2.0"
+diesel_migrations = "2.2"
 r2d2.workspace = true
 dotenvy.workspace = true
 
 # Redis
 redis.workspace = true
 bb8-redis.workspace = true
-bigdecimal = "0.4.8"
 rand.workspace = true
 
 [lib]
