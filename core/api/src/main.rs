@@ -27,8 +27,8 @@ async fn main() -> anyhow::Result<()> {
     let config = AppConfig::load()?;
     tracing::info!("Configuration loaded: {:?}", config);
     
-    // Initialize application state
-    let app_state = match AppState::new(config.clone()).await {
+    // Initialize application state with Diesel repositories (persistent database)
+    let app_state = match AppState::new_with_diesel(config.clone()).await {
         Ok(state) => state,
         Err(e) => {
             tracing::error!("Failed to initialize application state: {}", e);
