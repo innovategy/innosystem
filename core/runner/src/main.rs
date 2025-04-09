@@ -1,12 +1,14 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use diesel;
 use innosystem_common::{
     queue::{JobQueue, JobQueueConfig, RedisJobQueue},
     repositories::{
-        InMemoryCustomerRepository, InMemoryJobRepository, InMemoryJobTypeRepository,
-        InMemoryWalletRepository, JobRepository,
+        CustomerRepository, JobRepository, JobTypeRepository, WalletRepository,
+        diesel::{DieselCustomerRepository, DieselJobRepository, DieselJobTypeRepository, DieselWalletRepository},
     },
+    database,
 };
 use tokio::time::sleep;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -31,11 +33,23 @@ async fn main() -> anyhow::Result<()> {
     let config = RunnerConfig::load()?;
     tracing::info!("Starting job runner with configuration: {:?}", config);
 
-    // Initialize repositories (in-memory for Phase 1)
-    let job_repo = Arc::new(InMemoryJobRepository::new());
-    let job_type_repo = Arc::new(InMemoryJobTypeRepository::new());
-    let wallet_repo = Arc::new(InMemoryWalletRepository::new());
-    let customer_repo = Arc::new(InMemoryCustomerRepository::new());
+    // Get database URL from config or use default
+    let database_url = config.database_url.clone().unwrap_or_else(|| 
+        "postgres://postgres:postgres@postgres:5432/innosystem".to_string());
+    
+    // Create a database connection manager
+    let manager = diesel::r2d2::ConnectionManager::<diesel::pg::PgConnection>::new(database_url);
+    
+    // Build the connection pool
+    let pool = diesel::r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to establish database connection");
+    
+    // Initialize repositories with Diesel implementations
+    let job_repo = Arc::new(DieselJobRepository::new(pool.clone()));
+    let job_type_repo = Arc::new(DieselJobTypeRepository::new(pool.clone()));
+    let wallet_repo = Arc::new(DieselWalletRepository::new(pool.clone()));
+    let customer_repo = Arc::new(DieselCustomerRepository::new(pool.clone()));
 
     // Initialize Redis connection for job queue
     let job_queue = RedisJobQueue::new(
