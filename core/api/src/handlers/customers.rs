@@ -44,6 +44,8 @@ pub async fn create_customer(
         id: Uuid::new_v4(),
         name: payload.name.clone(),
         email: payload.email.clone(),
+        api_key: None,        // New customers initially have no API key
+        reseller_id: None,    // New customers initially have no reseller
     };
     
     // Insert the customer into the database

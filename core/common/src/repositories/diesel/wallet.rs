@@ -112,6 +112,8 @@ impl WalletRepository for DieselWalletRepository {
             amount_cents: -amount, // Negative amount for reservation
             transaction_type: "RESERVE".to_string(),
             reference_id: None,
+            description: Some(format!("Fund reservation of {}", amount)),
+            job_id: None,
         };
         
         self.add_transaction(transaction).await?;
@@ -128,6 +130,8 @@ impl WalletRepository for DieselWalletRepository {
             amount_cents: amount, // Positive amount for releasing reservation
             transaction_type: "RELEASE".to_string(),
             reference_id: None,
+            description: Some(format!("Release of reservation of {}", amount)),
+            job_id: None,
         };
         
         self.add_transaction(transaction).await?;

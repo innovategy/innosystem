@@ -40,7 +40,8 @@ pub struct NewWallet {
     pub balance_cents: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Identifiable)]
+#[diesel(table_name = wallet_transactions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WalletTransaction {
     pub id: Uuid,
@@ -48,6 +49,8 @@ pub struct WalletTransaction {
     pub amount_cents: i32,
     pub transaction_type: String,
     pub reference_id: Option<Uuid>,
+    pub description: Option<String>,
+    pub job_id: Option<Uuid>,
     pub created_at: Option<NaiveDateTime>,
 }
 
@@ -57,6 +60,8 @@ impl WalletTransaction {
         amount_cents: i32,
         transaction_type: String,
         reference_id: Option<Uuid>,
+        description: Option<String>,
+        job_id: Option<Uuid>,
     ) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -64,8 +69,28 @@ impl WalletTransaction {
             amount_cents,
             transaction_type,
             reference_id,
+            description,
+            job_id,
             created_at: None,
         }
+    }
+    
+    // Helper for job-related transactions
+    pub fn for_job(
+        wallet_id: Uuid,
+        amount_cents: i32,
+        transaction_type: String,
+        job_id: Uuid,
+        description: Option<String>,
+    ) -> Self {
+        Self::new(
+            wallet_id,
+            amount_cents,
+            transaction_type,
+            None,
+            description,
+            Some(job_id),
+        )
     }
 }
 
@@ -78,4 +103,6 @@ pub struct NewWalletTransaction {
     pub amount_cents: i32,
     pub transaction_type: String,
     pub reference_id: Option<Uuid>,
+    pub description: Option<String>,
+    pub job_id: Option<Uuid>,
 }

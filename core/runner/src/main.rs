@@ -5,10 +5,9 @@ use diesel;
 use innosystem_common::{
     queue::{JobQueue, JobQueueConfig, RedisJobQueue},
     repositories::{
-        CustomerRepository, JobRepository, JobTypeRepository, WalletRepository,
+        JobRepository,
         diesel::{DieselCustomerRepository, DieselJobRepository, DieselJobTypeRepository, DieselWalletRepository},
     },
-    database,
 };
 use tokio::time::sleep;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

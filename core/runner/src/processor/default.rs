@@ -67,6 +67,8 @@ impl DefaultJobProcessor {
                 amount_cents: -(cost_cents as i32),
                 transaction_type: "job_charge".to_string(),
                 reference_id: Some(job.id),
+                description: Some(format!("Job charge for job {}", job.id)),
+                job_id: Some(job.id),
             };
             
             self.wallet_repo.add_transaction(transaction).await?;

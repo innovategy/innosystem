@@ -28,6 +28,8 @@ impl CustomerRepository for InMemoryCustomerRepository {
             id: new_customer.id,
             name: new_customer.name,
             email: new_customer.email,
+            reseller_id: new_customer.reseller_id,
+            api_key: new_customer.api_key,
             created_at: Some(chrono::Utc::now().naive_utc()),
             updated_at: Some(chrono::Utc::now().naive_utc()),
         };
@@ -48,9 +50,19 @@ impl CustomerRepository for InMemoryCustomerRepository {
             .ok_or_else(|| Error::NotFound(format!("Customer not found: {}", id)))
     }
     
-    async fn find_by_api_key(&self, _api_key: &str) -> Result<Customer> {
-        // Since API keys were removed from the model, return a not found error
-        Err(Error::NotFound("API key lookup is not supported".to_string()))
+    async fn find_by_api_key(&self, api_key: &str) -> Result<Customer> {
+        let customers = self.customers.lock().map_err(|_| Error::Other(anyhow::anyhow!("Lock error")))?;
+        
+        // Find customer by API key
+        for customer in customers.values() {
+            if let Some(key) = &customer.api_key {
+                if key == api_key {
+                    return Ok(customer.clone());
+                }
+            }
+        }
+        
+        Err(Error::NotFound(format!("Customer not found with API key: {}", api_key)))
     }
     
     async fn update(&self, customer: Customer) -> Result<Customer> {

@@ -128,16 +128,22 @@ impl Seeder {
                 id: Uuid::new_v4(),
                 name: "Acme Corporation".to_string(),
                 email: "contact@acme.example.com".to_string(),
+                reseller_id: None,
+                api_key: None,
             },
             NewCustomer {
                 id: Uuid::new_v4(),
                 name: "TechStart Inc.".to_string(),
                 email: "info@techstart.example.com".to_string(),
+                reseller_id: None,
+                api_key: None,
             },
             NewCustomer {
                 id: Uuid::new_v4(),
                 name: "Global Services Ltd.".to_string(),
                 email: "support@globalservices.example.com".to_string(),
+                reseller_id: None,
+                api_key: None,
             },
         ];
 
