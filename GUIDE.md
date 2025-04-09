@@ -81,7 +81,7 @@ The system comes pre-configured with the following job types:
 
 ## How to Add a New Job Type
 
-Adding a new job type to the system involves two main steps:
+Adding a new job type to the system involves two main steps. Note that recent improvements have made this process more robust with better error handling and schema validations.
 
 ### 1. Add the Job Type to the Database
 
@@ -170,6 +170,9 @@ pub fn get_processor(processing_logic_id: &str) -> Option<Box<dyn Processor + Se
   - `sync`: Synchronous processing, completes immediately
   - `async`: Asynchronous processing, runs in the background
   - `batch`: Batch processing, handles multiple items at once
+- Ensure that when defining processor types in database records, they exactly match the `ProcessorType` enum values in the code
+- All required columns must be provided, including `processing_logic_id` and `standard_cost_cents`
+- The system now features improved error logging for debugging job type issues
 - Make sure to implement appropriate error handling in your processor
 - Always test new job types with the tester service before deploying to production
 
@@ -286,6 +289,20 @@ If you encounter issues with job processing, check:
 4. Job type configuration in the database
 5. Processor implementation for the specific job type
 
+### Common Job Type Issues and Solutions
+
+1. **"Column not found" errors**:
+   - Make sure your job_types table includes all required columns, particularly `processing_logic_id` and `standard_cost_cents`
+   - Run database migrations to update the schema if necessary
+
+2. **ProcessorType mismatches**:
+   - Ensure database values for processor_type exactly match the ProcessorType enum in the code
+   - Valid values are: "sync", "async", and "batch" (case sensitive)
+
+3. **Missing processor implementation**:
+   - Verify that the processing_logic_id in the database has a corresponding processor implementation
+   - Check that the processor is properly registered in the processor factory
+
 For detailed diagnostics, increase the logging level:
 
 ```yaml
@@ -302,3 +319,8 @@ The InnoSystem is designed for extensibility. Planned enhancements include:
 3. Webhook notifications for job status changes
 4. Enhanced monitoring and metrics collection
 5. Runner auto-scaling based on queue depth
+6. Further improvements to job type management with advanced processor types
+7. Enhanced error handling and debugging capabilities
+8. Multi-currency and multi-lingual support
+9. Integration with third-party systems via SDK
+10. Mobile application support

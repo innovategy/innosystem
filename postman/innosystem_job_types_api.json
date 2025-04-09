@@ -1,0 +1,303 @@
+{
+	"item": [
+		{
+			"name": "Job Types",
+			"item": [
+				{
+					"name": "List All Job Types",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/job-types",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"job-types"
+							]
+						},
+						"description": "Get a list of all available job types.\n\nAuthorization required: Customer token"
+					},
+					"response": [
+						{
+							"name": "Job Types List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/job-types",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"job-types"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000001\",\n        \"name\": \"Image Processing\",\n        \"description\": \"Process and transform images\",\n        \"enabled\": true,\n        \"processor_type\": \"GPU\",\n        \"standard_cost_cents\": 100,\n        \"created_at\": \"2025-01-01T00:00:00Z\",\n        \"updated_at\": \"2025-01-01T00:00:00Z\"\n    },\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000002\",\n        \"name\": \"Video Transcoding\",\n        \"description\": \"Transcode video files to different formats and resolutions\",\n        \"enabled\": true,\n        \"processor_type\": \"GPU\",\n        \"standard_cost_cents\": 250,\n        \"created_at\": \"2025-01-01T00:00:00Z\",\n        \"updated_at\": \"2025-01-01T00:00:00Z\"\n    },\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000003\",\n        \"name\": \"PDF Generation\",\n        \"description\": \"Generate PDF documents from various data sources\",\n        \"enabled\": true,\n        \"processor_type\": \"CPU\",\n        \"standard_cost_cents\": 50,\n        \"created_at\": \"2025-01-01T00:00:00Z\",\n        \"updated_at\": \"2025-01-01T00:00:00Z\"\n    },\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000004\",\n        \"name\": \"Machine Learning Inference\",\n        \"description\": \"Run inference on machine learning models\",\n        \"enabled\": true,\n        \"processor_type\": \"GPU\",\n        \"standard_cost_cents\": 300,\n        \"created_at\": \"2025-01-01T00:00:00Z\",\n        \"updated_at\": \"2025-01-01T00:00:00Z\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Get Job Type by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/job-types/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"job-types",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "00000000-0000-0000-0000-000000000001",
+									"description": "UUID of the job type"
+								}
+							]
+						},
+						"description": "Get details of a specific job type by ID.\n\nAuthorization required: Customer token"
+					},
+					"response": [
+						{
+							"name": "Job Type Details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/job-types/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"job-types",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "00000000-0000-0000-0000-000000000001"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"00000000-0000-0000-0000-000000000001\",\n    \"name\": \"Image Processing\",\n    \"description\": \"Process and transform images\",\n    \"enabled\": true,\n    \"processor_type\": \"GPU\",\n    \"standard_cost_cents\": 100,\n    \"processing_logic_id\": \"00000000-0000-0000-0000-000000000001\",\n    \"metadata\": {\n        \"supported_formats\": [\"jpg\", \"png\", \"gif\", \"webp\"],\n        \"max_resolution\": \"8192x8192\",\n        \"max_file_size_mb\": 100\n    },\n    \"created_at\": \"2025-01-01T00:00:00Z\",\n    \"updated_at\": \"2025-01-01T00:00:00Z\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Job Type (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Job Type\",\n    \"description\": \"Description of new job type\",\n    \"enabled\": true,\n    \"processor_type\": \"CPU\",\n    \"standard_cost_cents\": 150,\n    \"processing_logic_id\": \"00000000-0000-0000-0000-000000000005\",\n    \"metadata\": {\n        \"supported_formats\": [\"txt\", \"csv\", \"json\"],\n        \"max_file_size_mb\": 50\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/job-types",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"job-types"
+							]
+						},
+						"description": "Create a new job type (admin only).\n\nAuthorization required: Admin token"
+					},
+					"response": [
+						{
+							"name": "Job Type Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"New Job Type\",\n    \"description\": \"Description of new job type\",\n    \"enabled\": true,\n    \"processor_type\": \"CPU\",\n    \"standard_cost_cents\": 150,\n    \"processing_logic_id\": \"00000000-0000-0000-0000-000000000005\",\n    \"metadata\": {\n        \"supported_formats\": [\"txt\", \"csv\", \"json\"],\n        \"max_file_size_mb\": 50\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/job-types",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"job-types"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"00000000-0000-0000-0000-000000000005\",\n    \"name\": \"New Job Type\",\n    \"description\": \"Description of new job type\",\n    \"enabled\": true,\n    \"processor_type\": \"CPU\",\n    \"standard_cost_cents\": 150,\n    \"processing_logic_id\": \"00000000-0000-0000-0000-000000000005\",\n    \"metadata\": {\n        \"supported_formats\": [\"txt\", \"csv\", \"json\"],\n        \"max_file_size_mb\": 50\n    },\n    \"created_at\": \"2025-04-09T16:58:30Z\",\n    \"updated_at\": \"2025-04-09T16:58:30Z\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Job Type (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Updated description for job type\",\n    \"enabled\": true,\n    \"standard_cost_cents\": 175,\n    \"metadata\": {\n        \"supported_formats\": [\"txt\", \"csv\", \"json\", \"xml\"],\n        \"max_file_size_mb\": 75\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/job-types/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"job-types",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "00000000-0000-0000-0000-000000000005",
+									"description": "UUID of the job type to update"
+								}
+							]
+						},
+						"description": "Update an existing job type (admin only).\n\nAuthorization required: Admin token"
+					},
+					"response": [
+						{
+							"name": "Job Type Updated",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"description\": \"Updated description for job type\",\n    \"enabled\": true,\n    \"standard_cost_cents\": 175,\n    \"metadata\": {\n        \"supported_formats\": [\"txt\", \"csv\", \"json\", \"xml\"],\n        \"max_file_size_mb\": 75\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/job-types/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"job-types",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "00000000-0000-0000-0000-000000000005"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"00000000-0000-0000-0000-000000000005\",\n    \"name\": \"New Job Type\",\n    \"description\": \"Updated description for job type\",\n    \"enabled\": true,\n    \"processor_type\": \"CPU\",\n    \"standard_cost_cents\": 175,\n    \"processing_logic_id\": \"00000000-0000-0000-0000-000000000005\",\n    \"metadata\": {\n        \"supported_formats\": [\"txt\", \"csv\", \"json\", \"xml\"],\n        \"max_file_size_mb\": 75\n    },\n    \"created_at\": \"2025-04-09T16:58:30Z\",\n    \"updated_at\": \"2025-04-09T17:00:15Z\"\n}"
+						}
+					]
+				}
+			]
+		}
+	]
+}

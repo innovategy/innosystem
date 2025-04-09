@@ -1,0 +1,481 @@
+{
+	"item": [
+		{
+			"name": "Runner Management",
+			"item": [
+				{
+					"name": "Runner Registration",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{reseller_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Runner-GPU-01\",\n    \"ip_address\": \"192.168.1.100\",\n    \"metadata\": {\n        \"os\": \"Ubuntu 22.04\",\n        \"cpu\": \"AMD Ryzen 9 5950X\",\n        \"gpu\": \"NVIDIA RTX 4090\",\n        \"ram_gb\": 64,\n        \"storage_gb\": 2000\n    },\n    \"compatible_job_types\": [\n        \"Image Processing\",\n        \"Video Transcoding\",\n        \"Machine Learning Inference\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/runners/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"runners",
+								"register"
+							]
+						},
+						"description": "Register a new runner in the system.\n\nAuthorization required: Reseller token"
+					},
+					"response": [
+						{
+							"name": "Runner Registered",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Runner-GPU-01\",\n    \"ip_address\": \"192.168.1.100\",\n    \"metadata\": {\n        \"os\": \"Ubuntu 22.04\",\n        \"cpu\": \"AMD Ryzen 9 5950X\",\n        \"gpu\": \"NVIDIA RTX 4090\",\n        \"ram_gb\": 64,\n        \"storage_gb\": 2000\n    },\n    \"compatible_job_types\": [\n        \"Image Processing\",\n        \"Video Transcoding\",\n        \"Machine Learning Inference\"\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/runners/register",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"runners",
+										"register"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"00000000-0000-0000-0000-000000000010\",\n    \"name\": \"Runner-GPU-01\",\n    \"ip_address\": \"192.168.1.100\",\n    \"status\": \"Active\",\n    \"api_key\": \"runner_api_key_123456789\",\n    \"metadata\": {\n        \"os\": \"Ubuntu 22.04\",\n        \"cpu\": \"AMD Ryzen 9 5950X\",\n        \"gpu\": \"NVIDIA RTX 4090\",\n        \"ram_gb\": 64,\n        \"storage_gb\": 2000\n    },\n    \"compatible_job_types\": [\n        \"Image Processing\",\n        \"Video Transcoding\",\n        \"Machine Learning Inference\"\n    ],\n    \"reseller_id\": \"00000000-0000-0000-0000-000000000001\",\n    \"created_at\": \"2025-04-09T17:05:30Z\",\n    \"updated_at\": \"2025-04-09T17:05:30Z\",\n    \"last_heartbeat\": \"2025-04-09T17:05:30Z\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Send Heartbeat",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "runner_api_key_123456789",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"Active\",\n    \"load\": {\n        \"cpu_usage_percent\": 35.2,\n        \"memory_usage_percent\": 42.8,\n        \"gpu_usage_percent\": 65.3,\n        \"disk_usage_percent\": 68.1,\n        \"active_jobs\": 2,\n        \"queued_jobs\": 1\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/runners/heartbeat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"runners",
+								"heartbeat"
+							]
+						},
+						"description": "Send a heartbeat from a runner to indicate it's still alive and to update its status.\n\nAuthorization required: Runner API key"
+					},
+					"response": [
+						{
+							"name": "Heartbeat Received",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"Active\",\n    \"load\": {\n        \"cpu_usage_percent\": 35.2,\n        \"memory_usage_percent\": 42.8,\n        \"gpu_usage_percent\": 65.3,\n        \"disk_usage_percent\": 68.1,\n        \"active_jobs\": 2,\n        \"queued_jobs\": 1\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/runners/heartbeat",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"runners",
+										"heartbeat"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"00000000-0000-0000-0000-000000000010\",\n    \"last_heartbeat\": \"2025-04-09T17:10:15Z\",\n    \"message\": \"Heartbeat received\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Check Runner Health (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/runners/:id/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"runners",
+								":id",
+								"health"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "00000000-0000-0000-0000-000000000010",
+									"description": "Runner ID"
+								}
+							]
+						},
+						"description": "Check the health status of a specific runner.\n\nAuthorization required: Admin token"
+					},
+					"response": [
+						{
+							"name": "Runner Health Status",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/admin/runners/:id/health",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"runners",
+										":id",
+										"health"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "00000000-0000-0000-0000-000000000010"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"runner_id\": \"00000000-0000-0000-0000-000000000010\",\n    \"name\": \"Runner-GPU-01\",\n    \"health_status\": \"Healthy\",\n    \"last_heartbeat\": \"2025-04-09T17:10:15Z\",\n    \"heartbeat_age_seconds\": 45,\n    \"current_load\": {\n        \"cpu_usage_percent\": 35.2,\n        \"memory_usage_percent\": 42.8,\n        \"gpu_usage_percent\": 65.3,\n        \"disk_usage_percent\": 68.1,\n        \"active_jobs\": 2,\n        \"queued_jobs\": 1\n    },\n    \"active_jobs_count\": 2,\n    \"total_jobs_processed\": 145\n}"
+						}
+					]
+				},
+				{
+					"name": "Check Compatibility with Job Type (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/runners/:runner_id/compatibility/:job_type_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"runners",
+								":runner_id",
+								"compatibility",
+								":job_type_id"
+							],
+							"variable": [
+								{
+									"key": "runner_id",
+									"value": "00000000-0000-0000-0000-000000000010",
+									"description": "Runner ID"
+								},
+								{
+									"key": "job_type_id",
+									"value": "00000000-0000-0000-0000-000000000001",
+									"description": "Job Type ID"
+								}
+							]
+						},
+						"description": "Check if a runner is compatible with a specific job type.\n\nAuthorization required: Admin token"
+					},
+					"response": [
+						{
+							"name": "Runner is Compatible",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/admin/runners/:runner_id/compatibility/:job_type_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"runners",
+										":runner_id",
+										"compatibility",
+										":job_type_id"
+									],
+									"variable": [
+										{
+											"key": "runner_id",
+											"value": "00000000-0000-0000-0000-000000000010"
+										},
+										{
+											"key": "job_type_id",
+											"value": "00000000-0000-0000-0000-000000000001"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"runner_id\": \"00000000-0000-0000-0000-000000000010\",\n    \"runner_name\": \"Runner-GPU-01\",\n    \"job_type_id\": \"00000000-0000-0000-0000-000000000001\",\n    \"job_type_name\": \"Image Processing\",\n    \"is_compatible\": true,\n    \"reason\": \"Runner has 'Image Processing' in its compatible job types list\"\n}"
+						},
+						{
+							"name": "Runner is Not Compatible",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/admin/runners/:runner_id/compatibility/:job_type_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"runners",
+										":runner_id",
+										"compatibility",
+										":job_type_id"
+									],
+									"variable": [
+										{
+											"key": "runner_id",
+											"value": "00000000-0000-0000-0000-000000000010"
+										},
+										{
+											"key": "job_type_id",
+											"value": "00000000-0000-0000-0000-000000000003"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"runner_id\": \"00000000-0000-0000-0000-000000000010\",\n    \"runner_name\": \"Runner-GPU-01\",\n    \"job_type_id\": \"00000000-0000-0000-0000-000000000003\",\n    \"job_type_name\": \"PDF Generation\",\n    \"is_compatible\": false,\n    \"reason\": \"Runner does not have 'PDF Generation' in its compatible job types list\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Check and Reassign Jobs (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/runners/check-and-reassign-jobs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"runners",
+								"check-and-reassign-jobs"
+							]
+						},
+						"description": "Check for stalled jobs and reassign them to healthy runners.\n\nAuthorization required: Admin token"
+					},
+					"response": [
+						{
+							"name": "Jobs Reassigned",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/admin/runners/check-and-reassign-jobs",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"runners",
+										"check-and-reassign-jobs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"jobs_checked\": 15,\n    \"jobs_reassigned\": 3,\n    \"jobs_not_reassigned\": 12,\n    \"reassigned_jobs\": [\n        {\n            \"job_id\": \"00000000-0000-0000-0000-000000000005\",\n            \"old_runner_id\": \"00000000-0000-0000-0000-000000000012\",\n            \"new_runner_id\": \"00000000-0000-0000-0000-000000000010\"\n        },\n        {\n            \"job_id\": \"00000000-0000-0000-0000-000000000008\",\n            \"old_runner_id\": \"00000000-0000-0000-0000-000000000012\",\n            \"new_runner_id\": \"00000000-0000-0000-0000-000000000011\"\n        },\n        {\n            \"job_id\": \"00000000-0000-0000-0000-000000000009\",\n            \"old_runner_id\": null,\n            \"new_runner_id\": \"00000000-0000-0000-0000-000000000010\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "List All Runners (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/runners",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"runners"
+							]
+						},
+						"description": "List all runners in the system.\n\nAuthorization required: Admin token"
+					},
+					"response": [
+						{
+							"name": "Runners List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/admin/runners",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"runners"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000010\",\n        \"name\": \"Runner-GPU-01\",\n        \"ip_address\": \"192.168.1.100\",\n        \"status\": \"Active\",\n        \"reseller_id\": \"00000000-0000-0000-0000-000000000001\",\n        \"created_at\": \"2025-04-09T17:05:30Z\",\n        \"updated_at\": \"2025-04-09T17:10:15Z\",\n        \"last_heartbeat\": \"2025-04-09T17:10:15Z\",\n        \"health_status\": \"Healthy\",\n        \"compatible_job_types\": [\n            \"Image Processing\",\n            \"Video Transcoding\",\n            \"Machine Learning Inference\"\n        ],\n        \"active_jobs_count\": 2\n    },\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000011\",\n        \"name\": \"Runner-CPU-01\",\n        \"ip_address\": \"192.168.1.101\",\n        \"status\": \"Active\",\n        \"reseller_id\": \"00000000-0000-0000-0000-000000000001\",\n        \"created_at\": \"2025-04-09T17:05:45Z\",\n        \"updated_at\": \"2025-04-09T17:12:30Z\",\n        \"last_heartbeat\": \"2025-04-09T17:12:30Z\",\n        \"health_status\": \"Healthy\",\n        \"compatible_job_types\": [\n            \"PDF Generation\"\n        ],\n        \"active_jobs_count\": 1\n    },\n    {\n        \"id\": \"00000000-0000-0000-0000-000000000012\",\n        \"name\": \"Runner-GPU-02\",\n        \"ip_address\": \"192.168.1.102\",\n        \"status\": \"Offline\",\n        \"reseller_id\": \"00000000-0000-0000-0000-000000000002\",\n        \"created_at\": \"2025-04-09T17:06:00Z\",\n        \"updated_at\": \"2025-04-09T16:30:15Z\",\n        \"last_heartbeat\": \"2025-04-09T16:30:15Z\",\n        \"health_status\": \"Critical\",\n        \"compatible_job_types\": [\n            \"Image Processing\",\n            \"Video Transcoding\"\n        ],\n        \"active_jobs_count\": 0\n    }\n]"
+						}
+					]
+				}
+			]
+		}
+	]
+}
