@@ -55,11 +55,13 @@ pub async fn create_job_type(
     State(state): State<AppState>,
     Json(payload): Json<CreateJobTypeRequest>,
 ) -> (StatusCode, Json<JobTypeResponse>) {
+    tracing::info!("Received job type creation request: name={}, processor_type={}", payload.name, payload.processor_type);
     // Parse processor type from string
     let processor_type = match innosystem_common::models::job_type::ProcessorType::from_str(&payload.processor_type) {
         Some(pt) => pt,
         None => {
             tracing::error!("Invalid processor type: {}", payload.processor_type);
+            tracing::error!("Valid processor types are: sync, async, external_api, batch, webhook");
             return (StatusCode::BAD_REQUEST, Json(JobTypeResponse {
                 id: Uuid::nil(),
                 name: "".to_string(),
@@ -87,11 +89,15 @@ pub async fn create_job_type(
         enabled: payload.enabled,
     };
     
+    tracing::debug!("Creating job type with processor_type: {}", processor_type.as_str());
+    
     // Insert the job type into the database
+    tracing::debug!("Inserting job type into database with processor_type={}", processor_type.as_str());
     let job_type = match state.job_type_repo.create(new_job_type).await {
         Ok(jt) => jt,
         Err(e) => {
             tracing::error!("Failed to create job type: {}", e);
+            tracing::error!("Error details: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobTypeResponse {
                 id: Uuid::nil(),
                 name: "".to_string(),
