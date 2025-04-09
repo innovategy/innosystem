@@ -1,13 +1,18 @@
 [package]
 name = "innosystem-migrations"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+rust-version.workspace = true
+authors.workspace = true
 
 [dependencies]
+# Internal dependencies
 innosystem-common = { path = "../common" }
-clap = { version = "3.0", features = ["derive"] }
-dotenvy = "0.15"
-diesel = { version = "2.0", features = ["postgres"] }
-diesel_migrations = "2.0"
-tokio = { version = "1.0", features = ["full"] }
-anyhow = "1.0"
+
+# Re-export core dependencies from workspace
+clap.workspace = true
+dotenvy.workspace = true
+diesel.workspace = true
+diesel_migrations.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
