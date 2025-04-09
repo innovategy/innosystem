@@ -41,7 +41,12 @@ impl DefaultJobProcessor {
     /// Reserve funds from customer wallet for job processing
     async fn reserve_funds(&self, job: &Job) -> anyhow::Result<Wallet> {
         let wallet = self.wallet_repo.find_by_customer_id(job.customer_id).await?;
-        self.wallet_repo.reserve_funds(wallet.id, job.estimated_cost_cents as i32).await
+        self.wallet_repo.reserve_funds(
+            wallet.id, 
+            job.estimated_cost_cents as i32,
+            Some(format!("Reserve funds for job {}", job.id)),
+            Some(job.id)
+        ).await
             .map_err(|e| anyhow::anyhow!("Failed to reserve funds: {}", e))
     }
 
@@ -56,7 +61,12 @@ impl DefaultJobProcessor {
         
         // Release the reserved funds
         self.wallet_repo
-            .release_reservation(wallet.id, job.estimated_cost_cents as i32)
+            .release_reservation(
+                wallet.id, 
+                job.estimated_cost_cents as i32,
+                Some(format!("Release reservation for job {}", job.id)),
+                Some(job.id)
+            )
             .await?;
         
         // If job was successful, create a transaction for the actual cost
@@ -67,6 +77,10 @@ impl DefaultJobProcessor {
                 amount_cents: -(cost_cents as i32),
                 transaction_type: "job_charge".to_string(),
                 reference_id: Some(job.id),
+                description: Some(format!("Job charge for job {}", job.id)),
+                job_id: Some(job.id),
+                customer_id: job.customer_id,
+                created_at: None,
             };
             
             self.wallet_repo.add_transaction(transaction).await?;

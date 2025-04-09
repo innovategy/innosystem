@@ -123,6 +123,8 @@ impl WalletRepository for InMemoryWalletRepository {
             amount_cents: new_transaction.amount_cents,
             transaction_type: new_transaction.transaction_type,
             reference_id: new_transaction.reference_id,
+            description: new_transaction.description,
+            job_id: new_transaction.job_id,
             created_at: Some(chrono::Utc::now().naive_utc()),
         };
         
