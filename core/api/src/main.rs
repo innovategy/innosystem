@@ -55,9 +55,9 @@ async fn main() -> anyhow::Result<()> {
             .route("/resellers", get(handlers::resellers::get_all_resellers)
                                 .post(handlers::resellers::create_reseller))
             .route("/resellers/active", get(handlers::resellers::get_active_resellers))
-            .route("/resellers/:id", get(handlers::resellers::get_reseller)
+            .route("/resellers/{id}", get(handlers::resellers::get_reseller)
                                     .put(handlers::resellers::update_reseller))
-            .route("/resellers/:id/regenerate-key", post(handlers::resellers::regenerate_api_key))
+            .route("/resellers/{id}/regenerate-key", post(handlers::resellers::regenerate_api_key))
             .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
         )
         
@@ -70,28 +70,28 @@ async fn main() -> anyhow::Result<()> {
         )
         
         // Runner heartbeat endpoint (public - no auth required)
-        .route("/runners/:id/heartbeat", post(handlers::runners::update_heartbeat))
+        .route("/runners/{id}/heartbeat", post(handlers::runners::update_heartbeat))
         
         // Regular API routes with appropriate authentication
         // Jobs endpoints - require customer auth
         .route("/jobs", get(handlers::jobs::get_all_jobs)
                         .post(handlers::jobs::create_job))
-        .route("/jobs/:id", get(handlers::jobs::get_job))
+        .route("/jobs/{id}", get(handlers::jobs::get_job))
         .route("/jobs/cost/calculate", post(handlers::jobs::calculate_job_cost))
         .route("/jobs/complete", post(handlers::jobs::complete_job))
         
         // Project endpoints - require customer auth
         .route("/projects", get(handlers::projects::list_customer_projects)
                            .post(handlers::projects::create_project))
-        .route("/projects/:id", get(handlers::projects::get_project)
+        .route("/projects/{id}", get(handlers::projects::get_project)
                                .put(handlers::projects::update_project)
                                .delete(handlers::projects::delete_project))
                                
         // Wallet endpoints - require customer auth
-        .route("/wallets/:customer_id", get(handlers::wallet::get_wallet))
-        .route("/wallets/:customer_id/deposit", post(handlers::wallet::deposit_funds))
-        .route("/wallets/:customer_id/transactions/:limit/:offset", get(handlers::wallet::get_transactions))
-        .route("/wallets/job/:job_id/transactions", get(handlers::wallet::get_job_transactions))
+        .route("/wallets/{customer_id}", get(handlers::wallet::get_wallet))
+        .route("/wallets/{customer_id}/deposit", post(handlers::wallet::deposit_funds))
+        .route("/wallets/{customer_id}/transactions/{limit}/{offset}", get(handlers::wallet::get_transactions))
+        .route("/wallets/job/{job_id}/transactions", get(handlers::wallet::get_job_transactions))
         .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::customer_auth))
         
         // Job types endpoints - require admin auth
@@ -106,14 +106,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/runners", get(handlers::runners::list_all_runners)
                           .post(handlers::runners::register_runner))
         .route("/runners/active", get(handlers::runners::list_active_runners))
-        .route("/runners/:id", get(handlers::runners::get_runner))
-        .route("/runners/:id/capabilities", put(handlers::runners::update_capabilities))
-        .route("/runners/:id/status", put(handlers::runners::set_runner_status))
+        .route("/runners/{id}", get(handlers::runners::get_runner))
+        .route("/runners/{id}/capabilities", put(handlers::runners::update_capabilities))
+        .route("/runners/{id}/status", put(handlers::runners::set_runner_status))
         
         // Runner health and compatibility endpoints - require admin auth
-        .route("/runners/:id/health", get(handlers::runner_health::check_runner_health))
-        .route("/runners/:runner_id/compatible/:job_type_id", get(handlers::runner_health::check_compatibility))
-        .route("/job-types/:job_type_id/compatible-runners", get(handlers::runner_health::find_compatible_runners))
+        .route("/runners/{id}/health", get(handlers::runner_health::check_runner_health))
+        .route("/runners/{runner_id}/compatible/{job_type_id}", get(handlers::runner_health::check_compatibility))
+        .route("/job-types/{job_type_id}/compatible-runners", get(handlers::runner_health::find_compatible_runners))
         .route("/runners/maintenance/reassign-jobs", post(handlers::runner_health::check_and_reassign_jobs))
         .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
         
