@@ -1,9 +1,11 @@
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use axum::{Router, routing::get};
+use axum::middleware::from_fn_with_state;
 
 mod config;
 mod handlers;
+mod middleware;
 mod state;
 
 use config::AppConfig;
@@ -38,23 +40,44 @@ async fn main() -> anyhow::Result<()> {
     
     // Create the router with routes
     let app = Router::new()
-        // Health check endpoint
+        // Health check endpoint (no auth required)
         .route("/health", get(handlers::health::health_check))
         
-        // Jobs endpoints
+        // Public routes (no authentication needed)
+        .nest("/public", Router::new()
+            // Add public endpoints here
+        )
+        
+        // Admin routes (admin authentication required)
+        .nest("/admin", Router::new()
+            // Add admin-only endpoints here
+            .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
+        )
+        
+        // Reseller routes (reseller authentication required)
+        .nest("/reseller", Router::new()
+            // Add reseller-only endpoints here
+            .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::reseller_auth))
+        )
+        
+        // Regular API routes with appropriate authentication
+        // Jobs endpoints - require customer auth
         .route("/jobs", get(handlers::jobs::get_all_jobs)
                         .post(handlers::jobs::create_job))
         .route("/jobs/{id}", get(handlers::jobs::get_job))
+        .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::customer_auth))
         
-        // Job types endpoints
+        // Job types endpoints - require admin auth
         .route("/job-types", get(handlers::job_types::get_all_job_types)
                              .post(handlers::job_types::create_job_type))
         .route("/job-types/{id}", get(handlers::job_types::get_job_type))
+        .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::admin_auth))
         
-        // Customers endpoints
+        // Customers endpoints - require reseller auth
         .route("/customers", get(handlers::customers::get_all_customers)
                              .post(handlers::customers::create_customer))
         .route("/customers/{id}", get(handlers::customers::get_customer))
+        .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::reseller_auth))
         
         // Add application state
         .with_state(app_state);
