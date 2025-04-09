@@ -5,3 +5,4 @@ pub mod customers;
 pub mod resellers;
 pub mod projects;
 pub mod runners;
+pub mod wallet;

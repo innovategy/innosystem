@@ -8,6 +8,7 @@ use innosystem_common::{
 };
 
 use crate::config::AppConfig;
+use crate::services::BillingService;
 
 /// Application state shared across API handlers
 /// Kept as a contract for the application's shared state
@@ -29,6 +30,8 @@ pub struct AppState {
     pub job_queue: Arc<dyn JobQueue>,
     #[allow(dead_code)]
     pub config: AppConfig,
+    #[allow(dead_code)]
+    pub billing_service: Arc<BillingService>,
 }
 
 impl AppState {
@@ -65,6 +68,14 @@ impl AppState {
         let queue_config = JobQueueConfig::new(config.redis_url.clone().unwrap_or_else(|| "redis://redis:6379".to_string()));
         let job_queue = Arc::new(RedisJobQueue::new(queue_config).await?);
 
+        // Initialize the billing service
+        let billing_service = Arc::new(BillingService::new(
+            job_repo.clone(),
+            job_type_repo.clone(),
+            wallet_repo.clone(),
+            customer_repo.clone(),
+        ));
+        
         Ok(AppState {
             customer_repo,
             job_repo,
@@ -75,6 +86,7 @@ impl AppState {
             runner_repo,
             job_queue,
             config,
+            billing_service,
         })
     }
 }

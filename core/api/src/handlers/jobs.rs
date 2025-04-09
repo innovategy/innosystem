@@ -1,8 +1,9 @@
 use axum::{extract::{Path, State}, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use tracing::{info, error, warn};
 
-use innosystem_common::models::job::{NewJob, PriorityLevel};
+use innosystem_common::models::job::{NewJob, PriorityLevel, JobStatus};
 
 use crate::state::AppState;
 
@@ -54,6 +55,37 @@ pub struct JobResponse {
     pub started_at: Option<String>,
     /// Completion timestamp
     pub completed_at: Option<String>,
+}
+
+/// Request to calculate job cost
+#[derive(Debug, Deserialize)]
+pub struct CalculateJobCostRequest {
+    /// Job ID to calculate cost for
+    pub job_id: Uuid,
+}
+
+/// Response with job cost calculation
+#[derive(Debug, Serialize)]
+pub struct JobCostResponse {
+    /// Job ID
+    pub job_id: Uuid,
+    /// Estimated cost in cents
+    pub estimated_cost_cents: i32,
+    /// Calculated actual cost in cents
+    pub calculated_cost_cents: i32,
+}
+
+/// Request to complete a job
+#[derive(Debug, Deserialize)]
+pub struct CompleteJobRequest {
+    /// Job ID to mark as completed
+    pub job_id: Uuid,
+    /// Whether the job was successful
+    pub success: bool,
+    /// Output data from the job
+    pub output_data: Option<serde_json::Value>,
+    /// Error message if job failed
+    pub error: Option<String>,
 }
 
 /// Create a new job
@@ -220,4 +252,112 @@ pub async fn get_all_jobs(
     
     tracing::info!("Retrieved all jobs from database");
     Ok(Json(job_responses))
+}
+
+/// Calculate the cost of a job
+#[allow(dead_code)]
+pub async fn calculate_job_cost(
+    State(state): State<AppState>,
+    Json(payload): Json<CalculateJobCostRequest>,
+) -> Result<Json<JobCostResponse>, StatusCode> {
+    // Fetch the job to ensure it exists
+    let job = state.job_repo.find_by_id(payload.job_id)
+        .await
+        .map_err(|e| {
+            error!("Failed to fetch job: {}", e);
+            if e.to_string().contains("not found") {
+                StatusCode::NOT_FOUND
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        })?;
+    
+    // Calculate the cost using the billing service
+    let calculated_cost = state.billing_service.calculate_job_cost(payload.job_id)
+        .await
+        .map_err(|e| {
+            error!("Failed to calculate job cost: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    
+    // Create the response
+    let response = JobCostResponse {
+        job_id: job.id,
+        estimated_cost_cents: job.estimated_cost_cents,
+        calculated_cost_cents: calculated_cost,
+    };
+    
+    info!("Calculated cost for job {}: {} cents", job.id, calculated_cost);
+    Ok(Json(response))
+}
+
+/// Complete a job and process billing
+#[allow(dead_code)]
+pub async fn complete_job(
+    State(state): State<AppState>,
+    Json(payload): Json<CompleteJobRequest>,
+) -> Result<Json<JobResponse>, StatusCode> {
+    // Fetch the job to ensure it exists and check its current status
+    let job = state.job_repo.find_by_id(payload.job_id)
+        .await
+        .map_err(|e| {
+            error!("Failed to fetch job for completion: {}", e);
+            if e.to_string().contains("not found") {
+                StatusCode::NOT_FOUND
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        })?;
+    
+    // Check if job can be completed (must be in Running or Pending status)
+    if job.status != JobStatus::Running && job.status != JobStatus::Pending {
+        error!("Cannot complete job {} with status {}", job.id, job.status.as_str());
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    
+    // Process billing for the job
+    if let Err(e) = state.billing_service.process_job_billing(payload.job_id, payload.success).await {
+        error!("Failed to process billing for job {}: {}", payload.job_id, e);
+        // Continue with job completion even if billing fails, but log the error
+        warn!("Job {} will be marked as completed but billing failed", payload.job_id);
+    }
+    
+    // Update the job status and other fields
+    let updated_job = state.job_repo.set_completed(
+        payload.job_id,
+        payload.success,
+        payload.output_data.clone(),
+        payload.error.clone(),
+        job.cost_cents, // Pass current cost_cents as this was updated by the billing service
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to update job status: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    
+    // Convert the timestamps to RFC3339 strings if they exist
+    let created_at = updated_job.created_at.map(|dt| dt.and_utc().to_rfc3339());
+    let updated_at = updated_job.updated_at.map(|dt| dt.and_utc().to_rfc3339());
+    let completed_at = updated_job.completed_at.map(|dt| dt.and_utc().to_rfc3339());
+    
+    // Create the response
+    let response = JobResponse {
+        id: updated_job.id,
+        customer_id: updated_job.customer_id,
+        job_type_id: updated_job.job_type_id,
+        status: updated_job.status.as_str().to_string(),
+        priority: updated_job.priority.as_i32(),
+        input_data: updated_job.input_data,
+        output_data: updated_job.output_data,
+        error: updated_job.error,
+        estimated_cost_cents: updated_job.estimated_cost_cents,
+        cost_cents: Some(updated_job.cost_cents),
+        created_at,
+        started_at: updated_at,
+        completed_at,
+    };
+    
+    info!("Job {} completed with status: {}", payload.job_id, if payload.success { "SUCCESS" } else { "FAILURE" });
+    Ok(Json(response))
 }

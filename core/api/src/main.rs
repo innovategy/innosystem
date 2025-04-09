@@ -6,6 +6,7 @@ use axum::middleware::from_fn_with_state;
 mod config;
 mod handlers;
 mod middleware;
+mod services;
 mod state;
 
 use config::AppConfig;
@@ -75,7 +76,9 @@ async fn main() -> anyhow::Result<()> {
         // Jobs endpoints - require customer auth
         .route("/jobs", get(handlers::jobs::get_all_jobs)
                         .post(handlers::jobs::create_job))
-        .route("/jobs/{id}", get(handlers::jobs::get_job))
+        .route("/jobs/:id", get(handlers::jobs::get_job))
+        .route("/jobs/cost/calculate", post(handlers::jobs::calculate_job_cost))
+        .route("/jobs/complete", post(handlers::jobs::complete_job))
         
         // Project endpoints - require customer auth
         .route("/projects", get(handlers::projects::list_customer_projects)
@@ -83,6 +86,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/projects/:id", get(handlers::projects::get_project)
                                .put(handlers::projects::update_project)
                                .delete(handlers::projects::delete_project))
+                               
+        // Wallet endpoints - require customer auth
+        .route("/wallets/:customer_id", get(handlers::wallet::get_wallet))
+        .route("/wallets/:customer_id/deposit", post(handlers::wallet::deposit_funds))
+        .route("/wallets/:customer_id/transactions/:limit/:offset", get(handlers::wallet::get_transactions))
+        .route("/wallets/job/:job_id/transactions", get(handlers::wallet::get_job_transactions))
         .layer(from_fn_with_state(app_state.clone(), crate::middleware::auth::customer_auth))
         
         // Job types endpoints - require admin auth
